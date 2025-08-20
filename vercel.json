@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.py"
+    }
+  ],
+  "env": {
+    "AWS_ACCESS_KEY_ID": "@aws-access-key-id",
+    "AWS_SECRET_ACCESS_KEY": "@aws-secret-access-key",
+    "AWS_REGION": "@aws-region",
+    "DYNAMODB_TABLE_MOVEMENTS": "@dynamodb-table-movements",
+    "DYNAMODB_TABLE_ACCOUNTS": "@dynamodb-table-accounts",
+    "API_KEY": "@api-key"
+  }
+}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Account {{ account.account_number }} - FONAFAHE{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/accounts" class="text-indigo-600 hover:underline text-sm">&larr; Back to accounts</a>
+    <h1 class="text-2xl font-bold text-gray-800 mt-2">Account {{ account.account_number }}</h1>
+    <p class="text-gray-500">{{ account.owner_name }} &middot; {{ account.email }}</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-xl shadow p-5">
+        <p class="text-sm text-gray-500">Balance</p>
+        <p class="text-2xl font-bold text-indigo-700">${{ "%.2f"|format(account.balance) }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-5">
+        <p class="text-sm text-gray-500">Total Contributions</p>
+        <p class="text-2xl font-bold text-green-600">${{ "%.2f"|format(account.total_contributions) }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-5">
+        <p class="text-sm text-gray-500">Loan Disbursements</p>
+        <p class="text-2xl font-bold text-orange-600">${{ "%.2f"|format(account.total_loan_disbursements) }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-5">
+        <p class="text-sm text-gray-500">Active Loans</p>
+        <p class="text-2xl font-bold text-blue-600">{{ account.active_loans_count }}</p>
+    </div>
+</div>
+
+<div class="flex gap-3 mb-6">
+    <a href="/contributions?account_id={{ account.id }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">View Contributions</a>
+    <a href="/loans?account_id={{ account.id }}" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">View Loans</a>
+    <a href="/reports/balance?account_id={{ account.id }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Balance History</a>
+</div>
+
+<div class="bg-white rounded-xl shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">Account Info</h2>
+    <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+            <dt class="text-gray-500">Status</dt>
+            <dd class="font-medium">{{ account.status }}</dd>
+        </div>
+        <div>
+            <dt class="text-gray-500">Created</dt>
+            <dd>{{ account.created_at[:10] if account.created_at is string else account.created_at.strftime('%Y-%m-%d') }}</dd>
+        </div>
+        <div>
+            <dt class="text-gray-500">Last Contribution</dt>
+            <dd>{{ account.last_contribution_at[:10] if account.last_contribution_at else 'Never' }}</dd>
+        </div>
+    </dl>
+</div>
+{% endblock %}

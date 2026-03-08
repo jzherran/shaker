@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Request Loan - FONAFAHE{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/loans" class="text-indigo-600 hover:underline text-sm">&larr; Back to loans</a>
+    <h1 class="text-2xl font-bold text-gray-800 mt-2">Request a Loan</h1>
+</div>
+
+<div class="bg-white rounded-xl shadow p-6 max-w-lg">
+    <form id="loan-form">
+        <div class="space-y-4">
+            {% if is_admin and accounts %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Account</label>
+                <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
+                    {% for a in accounts %}
+                    <option value="{{ a.id }}">{{ a.account_number }} (Balance: ${{ "%.2f"|format(a.balance) }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% elif account %}
+            <input type="hidden" name="account_id" value="{{ account.id }}">
+            <p class="text-sm text-gray-500">Account: <strong>{{ account.account_number }}</strong> (Balance: ${{ "%.2f"|format(account.balance) }})</p>
+            {% endif %}
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Amount Requested</label>
+                <input type="number" name="amount_requested" step="0.01" min="0.01" required
+                    class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Backing Type</label>
+                <select name="backing_type" id="backing-type" required class="w-full border rounded-lg px-3 py-2 text-sm">
+                    <option value="individual">Individual (backed by your savings)</option>
+                    <option value="group">Group (backed by guarantors)</option>
+                    <option value="collective">Collective (backed by fund)</option>
+                </select>
+                <p id="backing-help" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%)</label>
+                    <input type="number" name="interest_rate" step="0.01" value="2.00"
+                        class="w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Term (months)</label>
+                    <input type="number" name="term_months" min="1" max="60" required
+                        class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="12">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                <textarea name="purpose" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm"
+                    placeholder="Describe the purpose of the loan"></textarea>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                Submit Loan Request
+            </button>
+        </div>
+    </form>
+
+    <div id="result" class="mt-4"></div>
+</div>
+
+<script>
+    const helpTexts = {
+        individual: 'Your loan amount cannot exceed your account balance.',
+        group: 'You will need guarantors whose combined pledge covers the loan amount.',
+        collective: 'Backed by the collective fund. Requires admin approval. Max 20% of available fund.',
+    };
+    document.getElementById('backing-type').addEventListener('change', (e) => {
+        document.getElementById('backing-help').textContent = helpTexts[e.target.value] || '';
+    });
+    document.getElementById('backing-help').textContent = helpTexts['individual'];
+
+    document.getElementById('loan-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+            account_id: form.account_id.value,
+            amount_requested: parseFloat(form.amount_requested.value),
+            interest_rate: parseFloat(form.interest_rate.value) / 100,
+            term_months: parseInt(form.term_months.value),
+            backing_type: form.backing_type.value,
+            purpose: form.purpose.value,
+        };
+        const res = await fetch('/api/loans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        const result = document.getElementById('result');
+        if (res.ok) {
+            const loan = await res.json();
+            result.innerHTML = '<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">Loan request submitted! <a href="/loans/' + loan.id + '" class="underline">View details</a></div>';
+        } else {
+            const err = await res.json();
+            result.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">' + (err.detail || 'Error submitting loan') + '</div>';
+        }
+    });
+</script>
+{% endblock %}

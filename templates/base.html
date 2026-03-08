@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shaker - FONAFAHE{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    {% if user %}
+    <nav class="bg-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard" class="text-xl font-bold">FONAFAHE</a>
+                    <div class="hidden md:flex space-x-4">
+                        <a href="/dashboard" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Dashboard</a>
+                        <a href="/accounts" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Accounts</a>
+                        <a href="/contributions" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Contributions</a>
+                        <a href="/loans" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Loans</a>
+                        <a href="/reports/balance" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Reports</a>
+                        {% if is_admin %}
+                        <a href="/reports/fund" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Fund</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">{{ user.full_name }}</span>
+                    {% if is_admin %}
+                    <span class="bg-yellow-500 text-xs px-2 py-1 rounded">Admin</span>
+                    {% endif %}
+                    <a href="/auth/logout" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Logout</a>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div class="md:hidden px-4 pb-3 space-y-1">
+            <a href="/dashboard" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Dashboard</a>
+            <a href="/contributions" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Contributions</a>
+            <a href="/loans" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Loans</a>
+            <a href="/reports/balance" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Reports</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() if get_flashed_messages is defined else [] %}
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for msg in messages %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-2">
+            {{ msg }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center text-gray-400 text-sm py-6">
+        Shaker - FONAFAHE &copy; 2025
+    </footer>
+</body>
+</html>

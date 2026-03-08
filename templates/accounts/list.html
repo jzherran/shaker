@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Accounts - FONAFAHE{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Accounts</h1>
+</div>
+
+<div class="bg-white rounded-xl shadow overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+            <tr class="text-left text-gray-500">
+                <th class="px-6 py-3">Account #</th>
+                <th class="px-6 py-3">Balance</th>
+                <th class="px-6 py-3">Status</th>
+                <th class="px-6 py-3">Created</th>
+                <th class="px-6 py-3"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in accounts %}
+            <tr class="border-t hover:bg-gray-50">
+                <td class="px-6 py-4 font-medium">{{ a.account_number }}</td>
+                <td class="px-6 py-4 font-semibold text-indigo-700">${{ "%.2f"|format(a.balance) }}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 rounded text-xs
+                        {% if a.status == 'active' %}bg-green-100 text-green-700
+                        {% elif a.status == 'suspended' %}bg-red-100 text-red-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ a.status }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-gray-500">{{ a.created_at[:10] if a.created_at is string else a.created_at.strftime('%Y-%m-%d') }}</td>
+                <td class="px-6 py-4">
+                    <a href="/accounts/{{ a.id }}" class="text-indigo-600 hover:underline">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not accounts %}
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-400">No accounts found</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

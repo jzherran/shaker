@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - FONAFAHE{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-800">Welcome, {{ user.full_name }}</h1>
+    <p class="text-gray-500">Your financial overview</p>
+</div>
+
+<!-- Balance Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    {% if account %}
+    <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-sm text-gray-500">Your Balance</p>
+        <p class="text-3xl font-bold text-indigo-700">${{ "%.2f"|format(account.balance) }}</p>
+        <p class="text-xs text-gray-400 mt-1">{{ account.owner_name }}</p>
+    </div>
+    {% endif %}
+
+    {% if fund %}
+    <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-sm text-gray-500">Collective Fund</p>
+        <p class="text-3xl font-bold text-green-600">${{ "%.2f"|format(fund.total_balance) }}</p>
+        <p class="text-xs text-gray-400 mt-1">{{ fund.total_members }} members</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-sm text-gray-500">Available for Lending</p>
+        <p class="text-3xl font-bold text-blue-600">${{ "%.2f"|format(fund.available_for_lending) }}</p>
+        <p class="text-xs text-gray-400 mt-1">Active loans: ${{ "%.2f"|format(fund.total_active_loans) }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    {% if is_admin %}
+    <a href="/contributions/new" class="bg-indigo-600 text-white rounded-xl shadow p-6 hover:bg-indigo-700 transition text-center">
+        <p class="text-lg font-semibold">Record Contribution</p>
+        <p class="text-sm opacity-80 mt-1">Add a new member contribution</p>
+    </a>
+    {% endif %}
+    <a href="/loans/request" class="bg-green-600 text-white rounded-xl shadow p-6 hover:bg-green-700 transition text-center">
+        <p class="text-lg font-semibold">Request Loan</p>
+        <p class="text-sm opacity-80 mt-1">Apply for a new loan</p>
+    </a>
+</div>
+
+<!-- Recent Contributions -->
+{% if recent_contributions %}
+<div class="bg-white rounded-xl shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Recent Contributions</h2>
+        <a href="/contributions" class="text-indigo-600 text-sm hover:underline">View all</a>
+    </div>
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="text-left text-gray-500 border-b">
+                <th class="pb-2">Date</th>
+                <th class="pb-2">Type</th>
+                <th class="pb-2">Period</th>
+                <th class="pb-2 text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in recent_contributions %}
+            <tr class="border-b last:border-0">
+                <td class="py-2">{{ c.created_at.strftime('%Y-%m-%d') if c.created_at is string == false else c.created_at[:10] }}</td>
+                <td class="py-2">
+                    <span class="px-2 py-1 rounded text-xs
+                        {% if c.contribution_type == 'regular' %}bg-blue-100 text-blue-700
+                        {% elif c.contribution_type == 'extraordinary' %}bg-purple-100 text-purple-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ c.contribution_type }}
+                    </span>
+                </td>
+                <td class="py-2">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
+                <td class="py-2 text-right font-semibold text-green-600">${{ "%.2f"|format(c.amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

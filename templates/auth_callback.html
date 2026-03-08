@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authenticating...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <p id="status" class="text-gray-500 text-lg">Signing you in...</p>
+    </div>
+
+    <script>
+        (async () => {
+            const statusEl = document.getElementById('status');
+
+            try {
+                // Supabase OAuth puts tokens in the URL hash fragment
+                // Format: #access_token=...&token_type=bearer&...
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const accessToken = hashParams.get('access_token');
+
+                if (!accessToken) {
+                    statusEl.textContent = 'No authentication token found. Redirecting...';
+                    setTimeout(() => { window.location.href = '/login'; }, 1500);
+                    return;
+                }
+
+                // Decode the JWT to extract user info (middle segment is the payload)
+                const parts = accessToken.split('.');
+                if (parts.length !== 3) {
+                    throw new Error('Invalid token format');
+                }
+
+                // Base64url decode
+                const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                const payload = JSON.parse(atob(base64));
+
+                // Send user info to our backend to create session cookie
+                const res = await fetch('/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: payload.sub,
+                        email: payload.email,
+                        full_name: payload.user_metadata?.full_name
+                            || payload.user_metadata?.name
+                            || (payload.email ? payload.email.split('@')[0] : 'User'),
+                    }),
+                });
+
+                if (res.ok) {
+                    window.location.href = '/dashboard';
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    statusEl.textContent = 'Login failed: ' + (err.detail || 'Unknown error');
+                    statusEl.className = 'text-red-500 text-lg';
+                    setTimeout(() => { window.location.href = '/login'; }, 3000);
+                }
+            } catch (e) {
+                statusEl.textContent = 'Error: ' + e.message;
+                statusEl.className = 'text-red-500 text-lg';
+                setTimeout(() => { window.location.href = '/login'; }, 3000);
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from mangum import Mangum
 from dotenv import load_dotenv
 import os
 
@@ -21,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
+# Mount static files (only works locally; Vercel serves static via routes config)
 static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
 if os.path.isdir(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -39,7 +38,3 @@ app.include_router(reports.router)
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "shaker-fonafahe", "version": "2.0.0"}
-
-
-# Vercel serverless handler
-handler = Mangum(app)

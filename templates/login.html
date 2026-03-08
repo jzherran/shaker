@@ -26,15 +26,18 @@
         </button>
 
         <div id="error-msg" class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm"></div>
+        {% if app_env == 'development' %}
         <div id="debug-msg" class="hidden mt-4 bg-gray-100 border border-gray-300 text-gray-600 px-4 py-3 rounded text-xs font-mono break-all"></div>
+        {% endif %}
     </div>
 
     <script>
         const supabaseUrl = '{{ supabase_url }}';
         const supabaseKey = '{{ supabase_key }}';
+        const isDev = '{{ app_env }}' === 'development';
 
-        const debugEl = document.getElementById('debug-msg');
         const errorEl = document.getElementById('error-msg');
+        const debugEl = document.getElementById('debug-msg');
 
         function showError(msg) {
             errorEl.textContent = msg;
@@ -42,8 +45,10 @@
         }
 
         function showDebug(msg) {
-            debugEl.textContent = msg;
-            debugEl.classList.remove('hidden');
+            if (isDev && debugEl) {
+                debugEl.textContent = msg;
+                debugEl.classList.remove('hidden');
+            }
         }
 
         // Validate config before attempting login
@@ -85,8 +90,6 @@
                     showDebug('Error details: ' + JSON.stringify(error));
                 } else if (data?.url) {
                     showDebug('Redirecting to: ' + data.url);
-                    // signInWithOAuth should redirect automatically,
-                    // but if it doesn't, do it manually
                     window.location.href = data.url;
                 }
             } catch (e) {

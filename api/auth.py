@@ -1,9 +1,15 @@
 from fastapi import Request, HTTPException, status
+from fastapi.responses import RedirectResponse
 from jose import jwt, JWTError
 from .config import get_settings
 from .database import get_db
 from .models.user import User
 from typing import Optional
+
+
+def _is_api_request(request: Request) -> bool:
+    """Check if the request is for a JSON API endpoint."""
+    return request.url.path.startswith("/api/")
 
 
 async def get_current_user_or_none(request: Request) -> Optional[User]:
@@ -32,12 +38,17 @@ async def get_current_user_or_none(request: Request) -> Optional[User]:
 
 
 async def get_current_user(request: Request) -> User:
-    """Require authenticated user. Raises 401 if not authenticated."""
+    """Require authenticated user. Redirects to login for pages, 401 for API."""
     user = await get_current_user_or_none(request)
     if user is None:
+        if _is_api_request(request):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+            )
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={"Location": "/login"},
         )
     return user
 

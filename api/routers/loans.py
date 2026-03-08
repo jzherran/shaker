@@ -77,9 +77,9 @@ async def loan_detail(
         "loan_id", loan_id
     ).order("payment_number").execute()
 
-    # Get guarantors
+    # Get guarantors with user names
     guarantors = db.table("loan_guarantors").select(
-        "*, accounts(account_number)"
+        "*, accounts(account_number, users(full_name))"
     ).eq("loan_id", loan_id).execute()
 
     return templates.TemplateResponse("loans/detail.html", {

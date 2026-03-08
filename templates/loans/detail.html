@@ -94,7 +94,7 @@
     <table class="w-full text-sm">
         <thead>
             <tr class="text-left text-gray-500 border-b">
-                <th class="pb-2">Account</th>
+                <th class="pb-2">Guarantor</th>
                 <th class="pb-2">Amount</th>
                 <th class="pb-2">Status</th>
             </tr>
@@ -102,7 +102,7 @@
         <tbody>
             {% for g in guarantors %}
             <tr class="border-b last:border-0">
-                <td class="py-2">{{ g.accounts.account_number if g.accounts else g.guarantor_account_id }}</td>
+                <td class="py-2">{{ g.accounts.users.full_name if g.accounts and g.accounts.users else (g.accounts.account_number if g.accounts else g.guarantor_account_id) }}</td>
                 <td class="py-2">${{ "%.2f"|format(g.guaranteed_amount) }}</td>
                 <td class="py-2">
                     <span class="px-2 py-1 rounded text-xs

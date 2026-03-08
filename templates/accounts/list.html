@@ -10,7 +10,7 @@
     <table class="w-full text-sm">
         <thead class="bg-gray-50">
             <tr class="text-left text-gray-500">
-                <th class="px-6 py-3">Account #</th>
+                <th class="px-6 py-3">Member</th>
                 <th class="px-6 py-3">Balance</th>
                 <th class="px-6 py-3">Status</th>
                 <th class="px-6 py-3">Created</th>
@@ -20,7 +20,7 @@
         <tbody>
             {% for a in accounts %}
             <tr class="border-t hover:bg-gray-50">
-                <td class="px-6 py-4 font-medium">{{ a.account_number }}</td>
+                <td class="px-6 py-4 font-medium">{{ a.owner_name or a.account_number }}</td>
                 <td class="px-6 py-4 font-semibold text-indigo-700">${{ "%.2f"|format(a.balance) }}</td>
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 rounded text-xs

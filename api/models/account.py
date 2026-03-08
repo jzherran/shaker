@@ -14,6 +14,7 @@ class Account(BaseModel):
     account_number: str
     balance: float
     status: str
+    owner_name: str = ""
     created_at: datetime
     updated_at: datetime
 

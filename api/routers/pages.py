@@ -30,6 +30,7 @@ async def login_page(request: Request):
         "request": request,
         "supabase_url": settings.supabase_url,
         "supabase_key": settings.supabase_key,
+        "app_env": settings.app_env,
     })
 
 

@@ -15,7 +15,7 @@
                 <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
                     <option value="">Select account...</option>
                     {% for a in accounts %}
-                    <option value="{{ a.id }}">{{ a.account_number }} (Balance: ${{ "%.2f"|format(a.balance) }})</option>
+                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} (Balance: ${{ "%.2f"|format(a.balance) }})</option>
                     {% endfor %}
                 </select>
             </div>

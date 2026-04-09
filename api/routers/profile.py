@@ -1,8 +1,9 @@
 import re
 
-from fastapi import APIRouter, Request, Depends
-from ..dependencies import templates, get_db
+from fastapi import APIRouter, Depends, Request
+
 from ..auth import get_current_user
+from ..dependencies import get_db, templates
 from ..models.user import User
 from ..services import user_service
 
@@ -40,10 +41,14 @@ def _parse_default_amount(raw: str) -> float | None:
 
 @router.get("/profile")
 async def profile_page(request: Request, user: User = Depends(get_current_user)):
-    return templates.TemplateResponse(request, "profile.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-    })
+    return templates.TemplateResponse(
+        request,
+        "profile.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+        },
+    )
 
 
 @router.post("/api/profile/htmx")
@@ -67,7 +72,8 @@ async def update_profile_htmx(request: Request, user: User = Depends(get_current
         parsed = _parse_default_amount(raw_str)
         if parsed is not None and parsed > 0:
             update_data["default_contribution_amount"] = parsed
-        # invalid or non-positive: omit so existing DB value is preserved (same as failed float() before)
+        # invalid or non-positive: omit so existing DB value is preserved
+        # (same as failed float() before)
 
     updated_user = await user_service.update_user_profile(db, user.id, update_data)
 

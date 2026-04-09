@@ -32,7 +32,7 @@
             {% for l in loans %}
             <tr class="border-t border-slate-100 hover:bg-primary-container/30">
                 <td class="px-6 py-3">{{ l.created_at[:10] if l.created_at is string else l.created_at.strftime('%Y-%m-%d') }}</td>
-                <td class="px-6 py-3 font-medium text-primary-dark">${{ "%.2f"|format(l.amount_requested) }}</td>
+                <td class="px-6 py-3 font-medium text-primary-dark">{{ l.amount_requested|cop }}</td>
                 <td class="px-6 py-3">
                     <span class="px-2 py-1 rounded-full text-xs font-medium
                         {% if l.backing_type == 'individual' %}bg-primary-container text-primary-on-container

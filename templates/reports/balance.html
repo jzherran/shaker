@@ -81,10 +81,10 @@
         data.forEach(s => {
             html += '<tr class="border-t border-slate-100">';
             html += '<td class="px-6 py-3">' + s.snapshot_date + '</td>';
-            html += '<td class="px-6 py-3 font-medium text-primary-dark">$' + s.balance.toFixed(2) + '</td>';
-            html += '<td class="px-6 py-3 text-primary">$' + s.total_contributions.toFixed(2) + '</td>';
-            html += '<td class="px-6 py-3 text-amber-700">$' + s.total_loan_disbursements.toFixed(2) + '</td>';
-            html += '<td class="px-6 py-3 text-sky-700">$' + s.total_loan_payments.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-3 font-medium text-primary-dark">' + formatCOP(s.balance) + '</td>';
+            html += '<td class="px-6 py-3 text-primary">' + formatCOP(s.total_contributions) + '</td>';
+            html += '<td class="px-6 py-3 text-amber-700">' + formatCOP(s.total_loan_disbursements) + '</td>';
+            html += '<td class="px-6 py-3 text-sky-700">' + formatCOP(s.total_loan_payments) + '</td>';
             html += '</tr>';
         });
 

@@ -1,11 +1,51 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
-from ..dependencies import templates, get_db
-from ..auth import require_approved_user as get_current_user, require_admin
-from ..models.user import User
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
+from ..auth import require_admin
+from ..auth import require_approved_user as get_current_user
+from ..dependencies import get_db, templates
 from ..models.loan import LoanCreate, LoanGuarantorCreate, LoanPaymentCreate
-from ..services import loan_service, account_service
+from ..models.user import User
+from ..services import account_service, loan_service
 
 router = APIRouter()
+
+
+@router.get("/api/members/search")
+async def search_members(
+    q: str = Query("", min_length=0),
+    exclude_account: str = Query(None),
+    user: User = Depends(get_current_user),
+):
+    """Search active members for guarantor picker. Returns account_id, name, available balance."""
+    db = get_db()
+    query = (
+        db.table("accounts")
+        .select("id, account_number, balance, user_id, users(full_name)")
+        .eq("status", "active")
+        .order("account_number")
+    )
+    result = query.execute()
+
+    members = []
+    q_lower = q.lower()
+    for row in result.data:
+        if exclude_account and row["id"] == exclude_account:
+            continue
+        user_data = row.get("users") or {}
+        name = user_data.get("full_name", "")
+        if q_lower and q_lower not in name.lower() and q_lower not in row["account_number"].lower():
+            continue
+        available = await loan_service.get_available_balance(db, row["id"])
+        members.append(
+            {
+                "account_id": row["id"],
+                "account_number": row["account_number"],
+                "full_name": name,
+                "balance": row["balance"],
+                "available_balance": round(available, 2),
+            }
+        )
+    return members
 
 
 @router.get("/loans")
@@ -22,36 +62,44 @@ async def loans_list(
 
     loans = await loan_service.get_loans(db, account_id=account_id, status=status)
 
-    return templates.TemplateResponse(request, "loans/list.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "loans": loans,
-        "filter_status": status,
-    })
+    return templates.TemplateResponse(
+        request,
+        "loans/list.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "loans": loans,
+            "filter_status": status,
+        },
+    )
 
 
 @router.get("/loans/request")
-async def loan_request_form(
-    request: Request, user: User = Depends(get_current_user)
-):
+async def loan_request_form(request: Request, user: User = Depends(get_current_user)):
     db = get_db()
     account = await account_service.get_account_by_user(db, user.id)
     accounts = []
+    available_balance = 0.0
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db)
+        accounts = await account_service.get_all_accounts(db, status="active")
+    if account:
+        available_balance = await loan_service.get_available_balance(db, account.id)
 
-    return templates.TemplateResponse(request, "loans/request.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "account": account,
-        "accounts": accounts,
-    })
+    return templates.TemplateResponse(
+        request,
+        "loans/request.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "account": account,
+            "accounts": accounts,
+            "available_balance": round(available_balance, 2),
+        },
+    )
 
 
 @router.get("/loans/{loan_id}")
-async def loan_detail(
-    request: Request, loan_id: str, user: User = Depends(get_current_user)
-):
+async def loan_detail(request: Request, loan_id: str, user: User = Depends(get_current_user)):
     db = get_db()
     loan = await loan_service.get_loan(db, loan_id)
     if not loan:
@@ -71,23 +119,34 @@ async def loan_detail(
         )
 
     # Get payments
-    payments_result = db.table("loan_payments").select("*").eq(
-        "loan_id", loan_id
-    ).order("payment_number").execute()
+    payments_result = (
+        db.table("loan_payments")
+        .select("*")
+        .eq("loan_id", loan_id)
+        .order("payment_number")
+        .execute()
+    )
 
     # Get guarantors with user names
-    guarantors = db.table("loan_guarantors").select(
-        "*, accounts(account_number, users(full_name))"
-    ).eq("loan_id", loan_id).execute()
+    guarantors = (
+        db.table("loan_guarantors")
+        .select("*, accounts(account_number, users(full_name))")
+        .eq("loan_id", loan_id)
+        .execute()
+    )
 
-    return templates.TemplateResponse(request, "loans/detail.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "loan": loan,
-        "schedule": schedule,
-        "payments": payments_result.data,
-        "guarantors": guarantors.data,
-    })
+    return templates.TemplateResponse(
+        request,
+        "loans/detail.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "loan": loan,
+            "schedule": schedule,
+            "payments": payments_result.data,
+            "guarantors": guarantors.data,
+        },
+    )
 
 
 @router.post("/api/loans")
@@ -98,7 +157,15 @@ async def create_loan(data: LoanCreate, user: User = Depends(get_current_user)):
     if user.role != "admin":
         account = await account_service.get_account_by_user(db, user.id)
         if not account or data.account_id != account.id:
-            raise HTTPException(status_code=403, detail="Can only request loans for your own account")
+            raise HTTPException(
+                status_code=403,
+                detail="Can only request loans for your own account",
+            )
+
+    try:
+        await account_service.require_active_account(db, data.account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     valid, msg = await loan_service.validate_loan_request(db, data)
     if not valid:
@@ -109,9 +176,7 @@ async def create_loan(data: LoanCreate, user: User = Depends(get_current_user)):
 
 
 @router.post("/api/loans/{loan_id}/approve")
-async def approve_loan(
-    loan_id: str, request: Request, admin: User = Depends(require_admin)
-):
+async def approve_loan(loan_id: str, request: Request, admin: User = Depends(require_admin)):
     db = get_db()
     loan = await loan_service.get_loan(db, loan_id)
     if not loan:
@@ -130,9 +195,7 @@ async def approve_loan(
 
 
 @router.post("/api/loans/{loan_id}/reject")
-async def reject_loan(
-    loan_id: str, request: Request, admin: User = Depends(require_admin)
-):
+async def reject_loan(loan_id: str, request: Request, admin: User = Depends(require_admin)):
     db = get_db()
     body = await request.json()
     reason = body.get("reason", "")

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class ContributionCreate(BaseModel):
@@ -9,8 +9,8 @@ class ContributionCreate(BaseModel):
     contribution_type: str = "regular"
     period_year: int
     period_month: int = Field(..., ge=1, le=12)
-    description: Optional[str] = None
-    receipt_reference: Optional[str] = None
+    description: str | None = None
+    receipt_reference: str | None = None
 
 
 class Contribution(BaseModel):
@@ -20,10 +20,10 @@ class Contribution(BaseModel):
     contribution_type: str
     period_year: int
     period_month: int
-    description: Optional[str] = None
-    receipt_reference: Optional[str] = None
+    description: str | None = None
+    receipt_reference: str | None = None
     status: str
-    created_by: Optional[str] = None
+    created_by: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -38,4 +38,4 @@ class BatchContributionCreate(BaseModel):
     contribution_type: str = "regular"
     period_year: int
     period_month: int = Field(..., ge=1, le=12)
-    description: Optional[str] = None
+    description: str | None = None

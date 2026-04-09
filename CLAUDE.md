@@ -15,6 +15,10 @@ uvicorn api.index:app --reload --port 8000
 # Install dependencies
 pip install -r requirements.txt
 
+# Lint + format (install dev tools first: pip install -r requirements-dev.txt)
+ruff check api scripts
+ruff format api scripts --check
+
 # Seed test data (requires Supabase connection)
 python -m scripts.seed_data
 
@@ -51,6 +55,15 @@ templates/              # Jinja2 HTML templates with HTMX
 static/css/             # Custom CSS (Tailwind via CDN)
 scripts/                # DB init SQL, seed data, snapshot generation
 ```
+
+### COP Currency Formatting
+
+All money values must use Colombian Peso (COP) format: `$ 1.234,56` (dot thousands, comma decimals).
+
+- **Jinja templates**: Use the `|cop` filter — `{{ value|cop }}`. Never use `${{ "%.2f"|format(...) }}`.
+- **JavaScript**: Use the global `formatCOP(value)` function from `static/js/cop-format.js`. Never use `'$' + n.toFixed(2)`.
+- **Python error messages**: Use `_format_cop(value)` from `api/dependencies.py`. Never use `f"${value:.2f}"`.
+- **Locale strings**: Do not embed `$` before placeholders. The `|cop` filter and `formatCOP()` already include the `$` symbol.
 
 ### Key Design Decisions
 

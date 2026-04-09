@@ -1,10 +1,9 @@
-from fastapi import Request, HTTPException, status
-from fastapi.responses import RedirectResponse
-from jose import jwt, JWTError
+from fastapi import HTTPException, Request, status
+from jose import JWTError, jwt
+
 from .config import get_settings
 from .database import get_db
 from .models.user import User
-from typing import Optional
 
 
 def _is_api_request(request: Request) -> bool:
@@ -12,7 +11,7 @@ def _is_api_request(request: Request) -> bool:
     return request.url.path.startswith("/api/")
 
 
-async def get_current_user_or_none(request: Request) -> Optional[User]:
+async def get_current_user_or_none(request: Request) -> User | None:
     """Extract user from session cookie. Returns None if not authenticated."""
     token = request.cookies.get("session")
     if not token:
@@ -20,9 +19,7 @@ async def get_current_user_or_none(request: Request) -> Optional[User]:
 
     settings = get_settings()
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=["HS256"]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
         auth_id = payload.get("sub")
         if not auth_id:
             return None
@@ -31,24 +28,16 @@ async def get_current_user_or_none(request: Request) -> Optional[User]:
 
     db = get_db()
     # Try primary auth_id lookup (active users only)
-    result = (
-        db.table("users").select("*")
-        .eq("auth_id", auth_id)
-        .eq("is_active", True)
-        .execute()
-    )
+    result = db.table("users").select("*").eq("auth_id", auth_id).eq("is_active", True).execute()
     if result.data:
         return User(**result.data[0])
 
     # Fall through to check auth aliases (merged users)
-    alias_result = (
-        db.table("user_auth_aliases").select("user_id")
-        .eq("auth_id", auth_id)
-        .execute()
-    )
+    alias_result = db.table("user_auth_aliases").select("user_id").eq("auth_id", auth_id).execute()
     if alias_result.data:
         user_result = (
-            db.table("users").select("*")
+            db.table("users")
+            .select("*")
             .eq("id", alias_result.data[0]["user_id"])
             .eq("is_active", True)
             .execute()

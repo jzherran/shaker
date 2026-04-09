@@ -10,11 +10,11 @@
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('loans.requested') }}</p>
-        <p class="text-2xl font-medium text-slate-900 mt-1">${{ "%.2f"|format(loan.amount_requested) }}</p>
+        <p class="text-2xl font-medium text-slate-900 mt-1">{{ loan.amount_requested|cop }}</p>
     </div>
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('loans.approved') }}</p>
-        <p class="text-2xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(loan.amount_approved) if loan.amount_approved else '-' }}</p>
+        <p class="text-2xl font-medium text-primary-dark mt-1">{{ loan.amount_approved|cop if loan.amount_approved else '-' }}</p>
     </div>
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('loans.status') }}</p>
@@ -99,7 +99,7 @@
             {% for g in guarantors %}
             <tr class="border-b last:border-0">
                 <td class="py-2">{{ g.accounts.users.full_name if g.accounts and g.accounts.users else (g.accounts.account_number if g.accounts else g.guarantor_account_id) }}</td>
-                <td class="py-2">${{ "%.2f"|format(g.guaranteed_amount) }}</td>
+                <td class="py-2">{{ g.guaranteed_amount|cop }}</td>
                 <td class="py-2">
                     <span class="px-2 py-1 rounded-full text-xs font-medium
                         {% if g.status == 'accepted' %}bg-emerald-100 text-emerald-800
@@ -133,10 +133,10 @@
                 {% for row in schedule %}
                 <tr class="border-b last:border-0">
                     <td class="py-2">{{ row.payment_number }}</td>
-                    <td class="py-2">${{ "%.2f"|format(row.payment) }}</td>
-                    <td class="py-2">${{ "%.2f"|format(row.principal) }}</td>
-                    <td class="py-2">${{ "%.2f"|format(row.interest) }}</td>
-                    <td class="py-2">${{ "%.2f"|format(row.remaining) }}</td>
+                    <td class="py-2">{{ row.payment|cop }}</td>
+                    <td class="py-2">{{ row.principal|cop }}</td>
+                    <td class="py-2">{{ row.interest|cop }}</td>
+                    <td class="py-2">{{ row.remaining|cop }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -163,9 +163,9 @@
             <tr class="border-b last:border-0">
                 <td class="py-2">{{ p.payment_number }}</td>
                 <td class="py-2">{{ p.created_at[:10] }}</td>
-                <td class="py-2 font-medium text-primary-dark">${{ "%.2f"|format(p.amount) }}</td>
-                <td class="py-2">${{ "%.2f"|format(p.principal_amount) }}</td>
-                <td class="py-2">${{ "%.2f"|format(p.interest_amount) }}</td>
+                <td class="py-2 font-medium text-primary-dark">{{ p.amount|cop }}</td>
+                <td class="py-2">{{ p.principal_amount|cop }}</td>
+                <td class="py-2">{{ p.interest_amount|cop }}</td>
             </tr>
             {% endfor %}
         </tbody>

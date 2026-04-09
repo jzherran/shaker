@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class AccountCreate(BaseModel):
@@ -31,4 +31,4 @@ class AccountSummary(BaseModel):
     total_loan_disbursements: float = 0
     active_loans_count: int = 0
     created_at: datetime
-    last_contribution_at: Optional[datetime] = None
+    last_contribution_at: datetime | None = None

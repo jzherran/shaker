@@ -7,15 +7,17 @@ Usage: python -m scripts.generate_snapshots
 On month-end, also generates monthly snapshots.
 On year-end, also generates yearly snapshots.
 """
+
 import asyncio
-import sys
 import os
+import sys
 from datetime import date
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from api.database import get_db
@@ -32,8 +34,10 @@ async def main():
 
     print("Updating fund summary...")
     fund = await update_fund_summary(db)
-    print(f"Fund: balance=${fund.total_balance}, members={fund.total_members}, "
-          f"active_loans=${fund.total_active_loans}, available=${fund.available_for_lending}")
+    print(
+        f"Fund: balance=${fund.total_balance}, members={fund.total_members}, "
+        f"active_loans=${fund.total_active_loans}, available=${fund.available_for_lending}"
+    )
 
     print("Done.")
 

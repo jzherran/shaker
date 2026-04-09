@@ -1,9 +1,10 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -37,7 +38,7 @@ if os.path.isdir(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Register routers
-from .routers import pages, accounts, contributions, loans, reports, users, profile
+from .routers import accounts, contributions, loans, pages, profile, reports, users
 
 app.include_router(pages.router)
 app.include_router(accounts.router)

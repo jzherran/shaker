@@ -4,13 +4,15 @@ Creates test users, accounts, and contributions.
 
 Usage: python -m scripts.seed_data
 """
-import sys
+
 import os
+import sys
 import uuid
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from api.database import get_db
@@ -21,12 +23,24 @@ def seed():
 
     # Create test users
     users = [
-        {"auth_id": str(uuid.uuid4()), "email": "admin@fonafahe.org",
-         "full_name": "Admin User", "role": "admin"},
-        {"auth_id": str(uuid.uuid4()), "email": "maria@example.com",
-         "full_name": "Maria Garcia", "role": "member"},
-        {"auth_id": str(uuid.uuid4()), "email": "carlos@example.com",
-         "full_name": "Carlos Lopez", "role": "member"},
+        {
+            "auth_id": str(uuid.uuid4()),
+            "email": "admin@fonafahe.org",
+            "full_name": "Admin User",
+            "role": "admin",
+        },
+        {
+            "auth_id": str(uuid.uuid4()),
+            "email": "maria@example.com",
+            "full_name": "Maria Garcia",
+            "role": "member",
+        },
+        {
+            "auth_id": str(uuid.uuid4()),
+            "email": "carlos@example.com",
+            "full_name": "Carlos Lopez",
+            "role": "member",
+        },
     ]
 
     print("Creating users...")
@@ -54,18 +68,21 @@ def seed():
     # Create some contributions
     print("Creating contributions...")
     admin_id = user_map["admin@fonafahe.org"]
-    for acct_num, acct_id in acct_map.items():
+    for _acct_num, acct_id in acct_map.items():
         for month in range(1, 4):
-            db.rpc("record_contribution", {
-                "p_account_id": acct_id,
-                "p_amount": 100.00,
-                "p_contribution_type": "regular",
-                "p_period_year": 2026,
-                "p_period_month": month,
-                "p_description": f"Monthly contribution {month}/2026",
-                "p_receipt_reference": "",
-                "p_created_by": admin_id,
-            }).execute()
+            db.rpc(
+                "record_contribution",
+                {
+                    "p_account_id": acct_id,
+                    "p_amount": 100.00,
+                    "p_contribution_type": "regular",
+                    "p_period_year": 2026,
+                    "p_period_month": month,
+                    "p_description": f"Monthly contribution {month}/2026",
+                    "p_receipt_reference": "",
+                    "p_created_by": admin_id,
+                },
+            ).execute()
 
     print("Seed data created successfully!")
     print(f"Users: {len(users)}")

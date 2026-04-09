@@ -2,9 +2,9 @@
     <p class="font-medium">{{ t('contributions.batch_success') }}</p>
     <p class="mt-1 text-sm">
         {% if count == 1 %}
-        {{ t('contributions.batch_success_one', total="%.2f"|format(total)) }}
+        {{ t('contributions.batch_success_one', total=total|cop) }}
         {% else %}
-        {{ t('contributions.batch_success_many', count=count, total="%.2f"|format(total)) }}
+        {{ t('contributions.batch_success_many', count=count, total=total|cop) }}
         {% endif %}
     </p>
 </div>

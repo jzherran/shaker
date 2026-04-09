@@ -52,8 +52,6 @@
                         <a href="/reports/balance" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.reports') }}</a>
                         {% if is_admin %}
                         <a href="/reports/fund" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.fund') }}</a>
-                        <a href="/admin/pending-users" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.pending_users') }}</a>
-                        <a href="/admin/merge-requests" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.merges') }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -95,6 +93,7 @@
         <p>{{ t('footer.copyright') }}</p>
         {% include "partials/lang_switcher.html" %}
     </footer>
+    <script src="/static/js/cop-format.js"></script>
     <script src="/static/js/cop-default-contrib.js" defer></script>
 </body>
 </html>

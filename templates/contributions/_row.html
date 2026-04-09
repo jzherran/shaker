@@ -10,7 +10,7 @@
     </td>
     <td class="px-6 py-3">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
     <td class="px-6 py-3 text-slate-600">{{ c.description or '-' }}</td>
-    <td class="px-6 py-3 text-right font-medium text-primary-dark">${{ "%.2f"|format(c.amount) }}</td>
+    <td class="px-6 py-3 text-right font-medium text-primary-dark">{{ c.amount|cop }}</td>
     {% if is_admin is defined and is_admin %}
     <td class="px-6 py-3">
         <button hx-delete="/api/contributions/{{ c.id }}"

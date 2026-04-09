@@ -1,15 +1,15 @@
-from typing import Optional
-
-from fastapi import APIRouter, Request, Depends, Response, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
-from ..dependencies import templates, get_db
-from ..i18n import locale_from_request, translate, translate_html
+
 from ..auth import (
-    get_current_user, get_current_user_or_none,
-    require_approved_user, require_admin, create_session_token,
+    create_session_token,
+    get_current_user,
+    get_current_user_or_none,
 )
-from ..models.user import User, UserEnrollment
 from ..config import get_settings
+from ..dependencies import get_db, templates
+from ..i18n import locale_from_request, translate, translate_html
+from ..models.user import User
 from ..services import account_service, report_service, user_service
 
 router = APIRouter()
@@ -38,19 +38,23 @@ async def login_page(request: Request):
         "err_oauth": translate(lang, "login.js.err_oauth"),
         "err_unexpected": translate(lang, "login.js.err_unexpected"),
     }
-    return templates.TemplateResponse(request, "login.html", {
-        "supabase_url": settings.supabase_url,
-        "supabase_key": settings.supabase_key,
-        "app_env": settings.app_env,
-        "login_js": login_js,
-    })
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {
+            "supabase_url": settings.supabase_url,
+            "supabase_key": settings.supabase_key,
+            "app_env": settings.app_env,
+            "login_js": login_js,
+        },
+    )
 
 
 @router.get("/set-language")
 async def set_language(
     request: Request,
     lang: str = Query("en"),
-    next_path: Optional[str] = Query(None, alias="next"),
+    next_path: str | None = Query(None, alias="next"),
 ):
     if lang not in ("en", "es"):
         lang = "en"
@@ -93,18 +97,18 @@ async def set_session(request: Request):
     if not result.data:
         # Check if this auth_id is a merged alias
         alias_check = (
-            db.table("user_auth_aliases").select("user_id")
-            .eq("auth_id", auth_id)
-            .execute()
+            db.table("user_auth_aliases").select("user_id").eq("auth_id", auth_id).execute()
         )
         if not alias_check.data:
             # Truly new user — create with pending approval, no account yet
-            db.table("users").insert({
-                "auth_id": auth_id,
-                "email": email,
-                "full_name": full_name,
-                "approval_status": "pending",
-            }).execute()
+            db.table("users").insert(
+                {
+                    "auth_id": auth_id,
+                    "email": email,
+                    "full_name": full_name,
+                    "approval_status": "pending",
+                }
+            ).execute()
 
     token = create_session_token(auth_id, email)
     response = Response(content='{"ok": true}', media_type="application/json")
@@ -135,11 +139,15 @@ async def enrollment_page(request: Request, user: User = Depends(get_current_use
     db = get_db()
     merge_status = await user_service.get_user_merge_status(db, user.id)
 
-    return templates.TemplateResponse(request, "enrollment.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "merge_pending": merge_status == "pending",
-    })
+    return templates.TemplateResponse(
+        request,
+        "enrollment.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "merge_pending": merge_status == "pending",
+        },
+    )
 
 
 @router.post("/enrollment")
@@ -148,11 +156,15 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
     national_id = form.get("national_id", "").strip()
 
     if not national_id or len(national_id) < 5:
-        return templates.TemplateResponse(request, "enrollment.html", {
-            "user": user,
-            "is_admin": user.role == "admin",
-            "error": translate_html(request, "enrollment.error_short"),
-        })
+        return templates.TemplateResponse(
+            request,
+            "enrollment.html",
+            {
+                "user": user,
+                "is_admin": user.role == "admin",
+                "error": translate_html(request, "enrollment.error_short"),
+            },
+        )
 
     db = get_db()
     enroll_status, merge_request = await user_service.enroll_national_id(db, user.id, national_id)
@@ -163,21 +175,29 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
         return RedirectResponse(url="/dashboard", status_code=302)
 
     # merge_requested or already_pending
-    return templates.TemplateResponse(request, "enrollment.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "merge_pending": True,
-    })
+    return templates.TemplateResponse(
+        request,
+        "enrollment.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "merge_pending": True,
+        },
+    )
 
 
 @router.get("/pending-approval")
 async def pending_approval_page(request: Request, user: User = Depends(get_current_user)):
     if user.approval_status == "approved":
         return RedirectResponse(url="/dashboard", status_code=302)
-    return templates.TemplateResponse(request, "pending_approval.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-    })
+    return templates.TemplateResponse(
+        request,
+        "pending_approval.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+        },
+    )
 
 
 @router.get("/dashboard")
@@ -198,15 +218,20 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
     recent_contributions = []
     if account:
         from ..services import contribution_service
+
         recent_contributions = await contribution_service.get_contributions(
             db, account_id=account.id, limit=5
         )
 
-    return templates.TemplateResponse(request, "dashboard.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "account": account,
-        "fund": fund,
-        "recent_contributions": recent_contributions,
-        "merge_pending": merge_pending,
-    })
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "account": account,
+            "fund": fund,
+            "recent_contributions": recent_contributions,
+            "merge_pending": merge_pending,
+        },
+    )

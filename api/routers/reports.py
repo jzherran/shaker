@@ -1,17 +1,18 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
 from datetime import date
-from ..dependencies import templates, get_db
-from ..auth import require_approved_user as get_current_user, require_admin
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from ..auth import require_admin
+from ..auth import require_approved_user as get_current_user
+from ..dependencies import get_db, templates
 from ..models.user import User
-from ..services import report_service, account_service
+from ..services import account_service, report_service
 
 router = APIRouter()
 
 
 @router.get("/reports/balance")
-async def balance_report_page(
-    request: Request, user: User = Depends(get_current_user)
-):
+async def balance_report_page(request: Request, user: User = Depends(get_current_user)):
     db = get_db()
     accounts = []
     if user.role == "admin":
@@ -21,24 +22,30 @@ async def balance_report_page(
         if account:
             accounts = [account]
 
-    return templates.TemplateResponse(request, "reports/balance.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "accounts": accounts,
-    })
+    return templates.TemplateResponse(
+        request,
+        "reports/balance.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "accounts": accounts,
+        },
+    )
 
 
 @router.get("/reports/fund")
-async def fund_report_page(
-    request: Request, user: User = Depends(get_current_user)
-):
+async def fund_report_page(request: Request, user: User = Depends(get_current_user)):
     db = get_db()
     fund = await report_service.get_fund_summary(db)
-    return templates.TemplateResponse(request, "reports/fund.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "fund": fund,
-    })
+    return templates.TemplateResponse(
+        request,
+        "reports/fund.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "fund": fund,
+        },
+    )
 
 
 @router.get("/api/reports/balance")

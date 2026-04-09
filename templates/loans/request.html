@@ -7,29 +7,32 @@
     <h1 class="text-2xl font-medium text-slate-900 mt-2">{{ t('loans.request_title') }}</h1>
 </div>
 
-<div class="md-card max-w-lg rounded-xl p-6">
+<div class="md-card max-w-2xl rounded-xl p-6">
     <form id="loan-form"
           data-help-individual="{{ t('loans.help.individual')|e }}"
           data-help-group="{{ t('loans.help.group')|e }}"
-          data-help-collective="{{ t('loans.help.collective')|e }}">
+          data-help-collective="{{ t('loans.help.collective')|e }}"
+          data-requester-account="{{ account.id if account else '' }}"
+          data-requester-name="{{ user.full_name }}"
+          data-requester-available="{{ available_balance }}">
         <div class="space-y-4">
             {% if is_admin and accounts %}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
                 <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
                     {% for a in accounts %}
-                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount="%.2f"|format(a.balance)) }})</option>
+                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount=a.balance|cop) }})</option>
                     {% endfor %}
                 </select>
             </div>
             {% elif account %}
             <input type="hidden" name="account_id" value="{{ account.id }}">
-            <p class="text-sm text-gray-500">{{ t('loans.account_line', name=account.owner_name or account.account_number, balance="%.2f"|format(account.balance)) }}</p>
+            <p class="text-sm text-gray-500">{{ t('loans.account_line', name=account.owner_name or account.account_number, balance=account.balance|cop) }}</p>
             {% endif %}
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.amount_requested') }}</label>
-                <input type="number" name="amount_requested" step="0.01" min="0.01" required
+                <input type="number" name="amount_requested" id="amount-requested" step="0.01" min="0.01" required
                     class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00">
             </div>
 
@@ -41,6 +44,43 @@
                     <option value="collective">{{ t('loans.backing_options.collective') }}</option>
                 </select>
                 <p id="backing-help" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+
+            {# ── Guarantors widget (visible only for group backing) ── #}
+            <div id="guarantors-section" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('loans.guarantors_label') }}</label>
+
+                <div id="guarantors-list" class="space-y-2"></div>
+
+                <div class="relative mt-3">
+                    <input type="text" id="guarantor-search" autocomplete="off"
+                           placeholder="{{ t('loans.guarantor_search_placeholder') }}"
+                           class="w-full border rounded-lg px-3 py-2 text-sm pr-8">
+                    <svg class="absolute right-2.5 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <div id="search-results" class="hidden absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-md3 max-h-48 overflow-y-auto"></div>
+                </div>
+
+                {# ── Loan summary card ── #}
+                <div id="loan-summary" class="hidden mt-4 rounded-xl border border-primary/20 bg-primary-container/40 p-4">
+                    <h3 class="text-sm font-medium text-slate-800 mb-3">{{ t('loans.summary_title') }}</h3>
+                    <div class="space-y-1.5 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">{{ t('loans.summary_total') }}</span>
+                            <span class="font-medium" id="summary-total">$ 0</span>
+                        </div>
+                        <div id="summary-guarantors"></div>
+                        <div id="summary-fund-row" class="hidden flex justify-between">
+                            <span class="text-amber-700 font-medium">FONAFAHE</span>
+                            <span class="font-medium text-amber-700" id="summary-fund">$ 0</span>
+                        </div>
+                        <div class="border-t border-primary/15 pt-1.5 flex justify-between">
+                            <span class="text-slate-600 font-medium">{{ t('loans.summary_covered') }}</span>
+                            <span class="font-medium text-emerald-700" id="summary-covered">$ 0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -73,52 +113,242 @@
 </div>
 
 <script>
-    (function() {
-        const form = document.getElementById('loan-form');
-        const helpTexts = {
-            individual: form.dataset.helpIndividual,
-            group: form.dataset.helpGroup,
-            collective: form.dataset.helpCollective,
-        };
-        const backingEl = document.getElementById('backing-type');
-        const helpEl = document.getElementById('backing-help');
-        backingEl.addEventListener('change', function(e) {
-            helpEl.textContent = helpTexts[e.target.value] || '';
-        });
-        helpEl.textContent = helpTexts['individual'];
+(function() {
+    const form = document.getElementById('loan-form');
+    const helpTexts = {
+        individual: form.dataset.helpIndividual,
+        group: form.dataset.helpGroup,
+        collective: form.dataset.helpCollective,
+    };
+    const backingEl = document.getElementById('backing-type');
+    const helpEl = document.getElementById('backing-help');
+    const guarantorsSection = document.getElementById('guarantors-section');
+    const searchInput = document.getElementById('guarantor-search');
+    const searchResults = document.getElementById('search-results');
+    const guarantorsList = document.getElementById('guarantors-list');
+    const amountInput = document.getElementById('amount-requested');
 
-        const msgs = {
-            ok: {{ t('loans.success_msg')|tojson }},
-            link: {{ t('loans.view_details')|tojson }},
-            err: {{ t('loans.error_submit')|tojson }},
-        };
+    const requesterAccount = form.dataset.requesterAccount;
+    const requesterName = form.dataset.requesterName;
+    const requesterAvailable = parseFloat(form.dataset.requesterAvailable) || 0;
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const data = {
-                account_id: form.account_id.value,
-                amount_requested: parseFloat(form.amount_requested.value),
-                interest_rate: parseFloat(form.interest_rate.value) / 100,
-                term_months: parseInt(form.term_months.value),
-                backing_type: form.backing_type.value,
-                purpose: form.purpose.value,
-            };
-            const res = await fetch('/api/loans', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+    const i18n = {
+        ok: {{ t('loans.success_msg')|tojson }},
+        link: {{ t('loans.view_details')|tojson }},
+        err: {{ t('loans.error_submit')|tojson }},
+        available: {{ t('loans.guarantor_available')|tojson }},
+        remove: {{ t('loans.guarantor_remove')|tojson }},
+        amount_placeholder: {{ t('loans.guarantor_amount_placeholder')|tojson }},
+        you: {{ t('loans.guarantor_you')|tojson }},
+    };
+
+    let guarantors = [];
+    let searchTimeout = null;
+
+    function initGroupMode() {
+        guarantors = [];
+        if (requesterAccount) {
+            guarantors.push({
+                account_id: requesterAccount,
+                name: requesterName,
+                available: requesterAvailable,
+                amount: 0,
+                isRequester: true,
             });
-            const result = document.getElementById('result');
-            if (res.ok) {
-                const loan = await res.json();
-                result.innerHTML = '<div class="rounded-xl border border-primary/25 bg-primary-container px-4 py-3 text-primary-on-container shadow-md1">' +
-                    msgs.ok + ' <a href="/loans/' + loan.id + '" class="font-medium underline">' + msgs.link + '</a></div>';
-            } else {
-                const err = await res.json();
-                result.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">' +
-                    (err.detail || msgs.err) + '</div>';
-            }
+        }
+        renderGuarantors();
+    }
+
+    backingEl.addEventListener('change', function(e) {
+        helpEl.textContent = helpTexts[e.target.value] || '';
+        const isGroup = e.target.value === 'group';
+        guarantorsSection.classList.toggle('hidden', !isGroup);
+        if (isGroup) initGroupMode();
+    });
+    helpEl.textContent = helpTexts['individual'];
+
+    // Search members
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const q = searchInput.value.trim();
+        if (q.length < 1) { searchResults.classList.add('hidden'); return; }
+        searchTimeout = setTimeout(() => fetchMembers(q), 250);
+    });
+
+    searchInput.addEventListener('focus', function() {
+        if (searchInput.value.trim().length >= 1) fetchMembers(searchInput.value.trim());
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.add('hidden');
+        }
+    });
+
+    async function fetchMembers(q) {
+        const currentExclude = form.account_id ? form.account_id.value : '';
+        const res = await fetch('/api/members/search?q=' + encodeURIComponent(q) + '&exclude_account=' + currentExclude);
+        if (!res.ok) return;
+        const members = await res.json();
+        const addedIds = new Set(guarantors.map(g => g.account_id));
+        const filtered = members.filter(m => !addedIds.has(m.account_id));
+
+        if (filtered.length === 0) {
+            searchResults.classList.add('hidden');
+            return;
+        }
+
+        searchResults.innerHTML = filtered.map(m =>
+            '<div class="px-3 py-2 hover:bg-primary-container/40 cursor-pointer text-sm border-b last:border-0" data-id="' +
+            m.account_id + '" data-name="' + m.full_name + '" data-available="' + m.available_balance + '">' +
+            '<span class="font-medium">' + m.full_name + '</span>' +
+            '<span class="text-xs text-gray-400 ml-2">' + m.account_number + '</span>' +
+            '<span class="text-xs text-emerald-600 float-right">' + i18n.available + ': ' + formatCOP(m.available_balance) + '</span>' +
+            '</div>'
+        ).join('');
+
+        searchResults.querySelectorAll('[data-id]').forEach(el => {
+            el.addEventListener('click', function() {
+                addGuarantor(el.dataset.id, el.dataset.name, parseFloat(el.dataset.available));
+                searchInput.value = '';
+                searchResults.classList.add('hidden');
+            });
         });
-    })();
+
+        searchResults.classList.remove('hidden');
+    }
+
+    function addGuarantor(accountId, name, availableBalance) {
+        if (guarantors.find(g => g.account_id === accountId)) return;
+        guarantors.push({ account_id: accountId, name, available: availableBalance, amount: 0, isRequester: false });
+        renderGuarantors();
+    }
+
+    function removeGuarantor(accountId) {
+        guarantors = guarantors.filter(g => g.account_id !== accountId || g.isRequester);
+        renderGuarantors();
+    }
+
+    function renderGuarantors() {
+        guarantorsList.innerHTML = guarantors.map(g => {
+            const label = g.isRequester
+                ? '<span class="text-sm font-medium truncate block">' + g.name + ' <span class="text-xs text-primary font-normal">(' + i18n.you + ')</span></span>'
+                : '<span class="text-sm font-medium truncate block">' + g.name + '</span>';
+
+            const removeBtn = g.isRequester ? '' :
+                '<button type="button" data-remove="' + g.account_id + '"' +
+                    ' class="text-red-400 hover:text-red-600 p-1 shrink-0" title="' + i18n.remove + '">' +
+                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
+                    '</svg>' +
+                '</button>';
+
+            const borderClass = g.isRequester ? 'border-primary/30 bg-primary-container/20' : 'border-slate-200 bg-white';
+
+            return '<div class="flex items-center gap-2 rounded-lg border ' + borderClass + ' px-3 py-2">' +
+                '<div class="flex-1 min-w-0">' +
+                    label +
+                    '<span class="text-xs text-gray-400">' + i18n.available + ': ' + formatCOP(g.available) + '</span>' +
+                '</div>' +
+                '<input type="number" step="0.01" min="0" max="' + g.available + '"' +
+                    ' placeholder="' + i18n.amount_placeholder + '"' +
+                    ' value="' + (g.amount || '') + '"' +
+                    ' data-id="' + g.account_id + '"' +
+                    ' class="guarantor-amount w-28 border rounded-lg px-2 py-1.5 text-sm text-right">' +
+                removeBtn +
+            '</div>';
+        }).join('');
+
+        guarantorsList.querySelectorAll('.guarantor-amount').forEach(input => {
+            input.addEventListener('input', function() {
+                const g = guarantors.find(g => g.account_id === input.dataset.id);
+                if (g) g.amount = parseFloat(input.value) || 0;
+                updateSummary();
+            });
+        });
+
+        guarantorsList.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', () => removeGuarantor(btn.dataset.remove));
+        });
+
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const summaryEl = document.getElementById('loan-summary');
+        const totalAmount = parseFloat(amountInput.value) || 0;
+
+        summaryEl.classList.remove('hidden');
+
+        document.getElementById('summary-total').textContent = formatCOP(totalAmount);
+
+        const summaryGuarantors = document.getElementById('summary-guarantors');
+        let coveredByPeople = 0;
+        summaryGuarantors.innerHTML = guarantors.map(g => {
+            coveredByPeople += g.amount;
+            const pct = totalAmount > 0 ? ((g.amount / totalAmount) * 100).toFixed(1) : '0.0';
+            const nameLabel = g.isRequester ? g.name + ' (' + i18n.you + ')' : g.name;
+            return '<div class="flex justify-between text-slate-500">' +
+                '<span>' + nameLabel + '</span>' +
+                '<span>' + formatCOP(g.amount) + ' <span class="text-xs">(' + pct + '%)</span></span>' +
+                '</div>';
+        }).join('');
+
+        const fundPortion = Math.max(totalAmount - coveredByPeople, 0);
+        const fundRow = document.getElementById('summary-fund-row');
+        const fundEl = document.getElementById('summary-fund');
+        if (fundPortion > 0.005) {
+            const fundPct = totalAmount > 0 ? ((fundPortion / totalAmount) * 100).toFixed(1) : '0.0';
+            fundEl.textContent = formatCOP(fundPortion) + ' (' + fundPct + '%)';
+            fundRow.classList.remove('hidden');
+        } else {
+            fundRow.classList.add('hidden');
+        }
+
+        const totalCovered = coveredByPeople + fundPortion;
+        document.getElementById('summary-covered').textContent = formatCOP(totalCovered);
+    }
+
+    amountInput.addEventListener('input', updateSummary);
+
+    // Submit
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const data = {
+            account_id: form.account_id.value,
+            amount_requested: parseFloat(form.amount_requested.value),
+            interest_rate: parseFloat(form.interest_rate.value) / 100,
+            term_months: parseInt(form.term_months.value),
+            backing_type: form.backing_type.value,
+            purpose: form.purpose.value,
+            guarantors: [],
+        };
+
+        if (data.backing_type === 'group') {
+            data.guarantors = guarantors
+                .filter(g => g.amount > 0)
+                .map(g => ({
+                    guarantor_account_id: g.account_id,
+                    guaranteed_amount: g.amount,
+                }));
+        }
+
+        const res = await fetch('/api/loans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        const result = document.getElementById('result');
+        if (res.ok) {
+            const loan = await res.json();
+            result.innerHTML = '<div class="rounded-xl border border-primary/25 bg-primary-container px-4 py-3 text-primary-on-container shadow-md1">' +
+                i18n.ok + ' <a href="/loans/' + loan.id + '" class="font-medium underline">' + i18n.link + '</a></div>';
+        } else {
+            const err = await res.json();
+            result.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">' +
+                (err.detail || i18n.err) + '</div>';
+        }
+    });
+})();
 </script>
 {% endblock %}

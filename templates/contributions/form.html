@@ -22,7 +22,7 @@
                 <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
                     <option value="">{{ t('contributions.select_account') }}</option>
                     {% for a in accounts %}
-                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount="%.2f"|format(a.balance)) }})</option>
+                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount=a.balance|cop) }})</option>
                     {% endfor %}
                 </select>
             </div>
@@ -30,7 +30,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
                 <span class="block text-gray-600 bg-gray-50 px-3 py-2 rounded-md border border-gray-200 text-sm">
-                    {{ account.owner_name or account.account_number }} ({{ t('contributions.balance_label', amount="%.2f"|format(account.balance)) }})
+                    {{ account.owner_name or account.account_number }} ({{ t('contributions.balance_label', amount=account.balance|cop) }})
                 </span>
                 <input type="hidden" name="account_id" value="{{ account.id }}">
             </div>

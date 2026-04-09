@@ -1,0 +1,29 @@
+[project]
+name = "shaker"
+version = "0.0.0"
+description = "FONAFAHE collaborative funding (FastAPI)"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["api", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+# FastAPI uses Depends(...) in parameter defaults by design
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+# Router imports after app setup / static mount
+"api/index.py" = ["E402"]
+# load_dotenv() before importing api package
+"scripts/*.py" = ["E402"]

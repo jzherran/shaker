@@ -1,15 +1,15 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class UserCreate(BaseModel):
     auth_id: str
     email: str
     full_name: str
-    phone: Optional[str] = None
-    national_id: Optional[str] = None
-    default_contribution_amount: Optional[float] = None
+    phone: str | None = None
+    national_id: str | None = None
+    default_contribution_amount: float | None = None
     role: str = "member"
 
 
@@ -18,9 +18,9 @@ class User(BaseModel):
     auth_id: str
     email: str
     full_name: str
-    phone: Optional[str] = None
-    national_id: Optional[str] = None
-    default_contribution_amount: Optional[float] = None
+    phone: str | None = None
+    national_id: str | None = None
+    default_contribution_amount: float | None = None
     role: str
     approval_status: str = "approved"
     is_active: bool
@@ -33,9 +33,9 @@ class UserEnrollment(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    full_name: Optional[str] = None
-    phone: Optional[str] = None
-    default_contribution_amount: Optional[float] = Field(None, gt=0)
+    full_name: str | None = None
+    phone: str | None = None
+    default_contribution_amount: float | None = Field(None, gt=0)
 
 
 class MergeRequest(BaseModel):
@@ -44,9 +44,9 @@ class MergeRequest(BaseModel):
     target_user_id: str
     national_id: str
     status: str
-    reviewed_by: Optional[str] = None
+    reviewed_by: str | None = None
     created_at: datetime
-    reviewed_at: Optional[datetime] = None
+    reviewed_at: datetime | None = None
 
 
 class MergeRequestDetail(MergeRequest):

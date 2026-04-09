@@ -8,7 +8,7 @@
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="md-card p-6 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('reports.total_balance') }}</p>
-        <p class="text-3xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(fund.total_balance) }}</p>
+        <p class="text-3xl font-medium text-primary-dark mt-1">{{ fund.total_balance|cop }}</p>
     </div>
     <div class="md-card p-6 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('reports.total_members') }}</p>
@@ -16,11 +16,11 @@
     </div>
     <div class="md-card p-6 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('reports.active_loans') }}</p>
-        <p class="text-3xl font-medium text-amber-700 mt-1">${{ "%.2f"|format(fund.total_active_loans) }}</p>
+        <p class="text-3xl font-medium text-amber-700 mt-1">{{ fund.total_active_loans|cop }}</p>
     </div>
     <div class="md-card p-6 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('reports.available_lending') }}</p>
-        <p class="text-3xl font-medium text-primary mt-1">${{ "%.2f"|format(fund.available_for_lending) }}</p>
+        <p class="text-3xl font-medium text-primary mt-1">{{ fund.available_for_lending|cop }}</p>
     </div>
 </div>
 

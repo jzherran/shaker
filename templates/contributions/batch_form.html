@@ -69,7 +69,7 @@
                             <div class="text-xs text-gray-500">{{ ua.email }}</div>
                         </td>
                         <td class="px-4 py-3 font-mono text-gray-600">{{ ua.account_number }}</td>
-                        <td class="px-4 py-3 text-right font-medium text-primary-dark">${{ "%.2f"|format(ua.balance) }}</td>
+                        <td class="px-4 py-3 text-right font-medium text-primary-dark">{{ ua.balance|cop }}</td>
                         <td class="px-4 py-3">
                             <input type="number" name="amount_{{ ua.account_id }}"
                                    value="{{ ua.default_amount or '' }}"

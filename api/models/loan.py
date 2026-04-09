@@ -1,6 +1,11 @@
+from datetime import date, datetime
+
 from pydantic import BaseModel, Field
-from datetime import datetime, date
-from typing import Optional
+
+
+class GuarantorEntry(BaseModel):
+    guarantor_account_id: str
+    guaranteed_amount: float = Field(..., gt=0)
 
 
 class LoanCreate(BaseModel):
@@ -9,24 +14,25 @@ class LoanCreate(BaseModel):
     interest_rate: float = 0.02
     term_months: int = Field(..., gt=0)
     backing_type: str  # individual, group, collective
-    purpose: Optional[str] = None
+    purpose: str | None = None
+    guarantors: list[GuarantorEntry] = []
 
 
 class Loan(BaseModel):
     id: str
     account_id: str
     amount_requested: float
-    amount_approved: Optional[float] = None
+    amount_approved: float | None = None
     interest_rate: float
     term_months: int
     backing_type: str
     status: str
-    purpose: Optional[str] = None
-    rejection_reason: Optional[str] = None
-    approved_by: Optional[str] = None
-    approved_at: Optional[datetime] = None
-    disbursed_at: Optional[datetime] = None
-    due_date: Optional[date] = None
+    purpose: str | None = None
+    rejection_reason: str | None = None
+    approved_by: str | None = None
+    approved_at: datetime | None = None
+    disbursed_at: datetime | None = None
+    due_date: date | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -43,7 +49,7 @@ class LoanGuarantor(BaseModel):
     guarantor_account_id: str
     guaranteed_amount: float
     status: str
-    responded_at: Optional[datetime] = None
+    responded_at: datetime | None = None
     created_at: datetime
 
 
@@ -53,7 +59,7 @@ class LoanPaymentCreate(BaseModel):
     principal_amount: float = 0
     interest_amount: float = 0
     payment_number: int
-    receipt_reference: Optional[str] = None
+    receipt_reference: str | None = None
 
 
 class LoanPayment(BaseModel):
@@ -63,6 +69,6 @@ class LoanPayment(BaseModel):
     principal_amount: float
     interest_amount: float
     payment_number: int
-    receipt_reference: Optional[str] = None
+    receipt_reference: str | None = None
     status: str
     created_at: datetime

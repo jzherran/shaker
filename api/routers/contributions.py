@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from ..dependencies import templates, get_db
-from ..auth import require_approved_user as get_current_user, require_admin
-from ..models.user import User
-from ..models.contribution import ContributionCreate, BatchContributionCreate, BatchContributionItem
-from ..services import contribution_service, account_service, user_service
+
+from ..auth import require_admin
+from ..auth import require_approved_user as get_current_user
+from ..dependencies import get_db, templates
 from ..i18n import translate_html
-import json
+from ..models.contribution import BatchContributionCreate, BatchContributionItem, ContributionCreate
+from ..models.user import User
+from ..services import account_service, contribution_service, user_service
 
 router = APIRouter()
 
@@ -35,57 +36,67 @@ async def contributions_list(
     if user.role == "admin":
         accounts = await account_service.get_all_accounts(db)
 
-    return templates.TemplateResponse(request, "contributions/list.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "contributions": contributions,
-        "accounts": accounts,
-        "filter_account_id": account_id,
-        "filter_year": year,
-        "filter_month": month,
-    })
+    return templates.TemplateResponse(
+        request,
+        "contributions/list.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "contributions": contributions,
+            "accounts": accounts,
+            "filter_account_id": account_id,
+            "filter_year": year,
+            "filter_month": month,
+        },
+    )
 
 
 @router.get("/contributions/new")
-async def contribution_form(
-    request: Request, user: User = Depends(get_current_user)
-):
+async def contribution_form(request: Request, user: User = Depends(get_current_user)):
     db = get_db()
 
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db)
-        return templates.TemplateResponse(request, "contributions/form.html", {
-            "user": user,
-            "is_admin": True,
-            "accounts": accounts,
-        })
+        accounts = await account_service.get_all_accounts(db, status="active")
+        return templates.TemplateResponse(
+            request,
+            "contributions/form.html",
+            {
+                "user": user,
+                "is_admin": True,
+                "accounts": accounts,
+            },
+        )
     else:
         account = await account_service.get_account_by_user(db, user.id)
-        return templates.TemplateResponse(request, "contributions/form.html", {
-            "user": user,
-            "is_admin": False,
-            "account": account,
-            "default_amount": user.default_contribution_amount,
-        })
+        return templates.TemplateResponse(
+            request,
+            "contributions/form.html",
+            {
+                "user": user,
+                "is_admin": False,
+                "account": account,
+                "default_amount": user.default_contribution_amount,
+            },
+        )
 
 
 @router.get("/contributions/batch")
-async def batch_contribution_form(
-    request: Request, admin: User = Depends(require_admin)
-):
+async def batch_contribution_form(request: Request, admin: User = Depends(require_admin)):
     db = get_db()
     users_accounts = await user_service.get_active_users_with_accounts(db)
-    return templates.TemplateResponse(request, "contributions/batch_form.html", {
-        "user": admin,
-        "is_admin": True,
-        "users_accounts": users_accounts,
-    })
+    return templates.TemplateResponse(
+        request,
+        "contributions/batch_form.html",
+        {
+            "user": admin,
+            "is_admin": True,
+            "users_accounts": users_accounts,
+        },
+    )
 
 
 @router.post("/api/contributions")
-async def create_contribution(
-    data: ContributionCreate, user: User = Depends(get_current_user)
-):
+async def create_contribution(data: ContributionCreate, user: User = Depends(get_current_user)):
     db = get_db()
 
     # Non-admin can only create for their own account
@@ -94,16 +105,17 @@ async def create_contribution(
         if not account or account.id != data.account_id:
             raise HTTPException(status_code=403, detail="Can only contribute to your own account")
 
-    contribution = await contribution_service.record_contribution(
-        db, data, created_by=user.id
-    )
+    try:
+        await account_service.require_active_account(db, data.account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    contribution = await contribution_service.record_contribution(db, data, created_by=user.id)
     return contribution.model_dump()
 
 
 @router.post("/api/contributions/htmx")
-async def create_contribution_htmx(
-    request: Request, user: User = Depends(get_current_user)
-):
+async def create_contribution_htmx(request: Request, user: User = Depends(get_current_user)):
     """HTMX endpoint: returns an HTML row partial."""
     form = await request.form()
     data = ContributionCreate(
@@ -124,18 +136,23 @@ async def create_contribution_htmx(
         if not account or account.id != data.account_id:
             raise HTTPException(status_code=403, detail="Can only contribute to your own account")
 
-    contribution = await contribution_service.record_contribution(
-        db, data, created_by=user.id
+    try:
+        await account_service.require_active_account(db, data.account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    contribution = await contribution_service.record_contribution(db, data, created_by=user.id)
+    return templates.TemplateResponse(
+        request,
+        "contributions/_row.html",
+        {
+            "c": contribution,
+        },
     )
-    return templates.TemplateResponse(request, "contributions/_row.html", {
-        "c": contribution,
-    })
 
 
 @router.post("/api/contributions/batch/htmx")
-async def create_batch_contributions_htmx(
-    request: Request, admin: User = Depends(require_admin)
-):
+async def create_batch_contributions_htmx(request: Request, admin: User = Depends(require_admin)):
     """HTMX endpoint: batch create contributions for selected accounts."""
     form = await request.form()
 
@@ -169,22 +186,30 @@ async def create_batch_contributions_htmx(
     )
 
     db = get_db()
+    for item in items:
+        try:
+            await account_service.require_active_account(db, item.account_id)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+
     contributions = await contribution_service.record_contributions_batch(
         db, batch_data, created_by=admin.id
     )
 
     total = sum(c.amount for c in contributions)
-    return templates.TemplateResponse(request, "contributions/_batch_result.html", {
-        "count": len(contributions),
-        "total": total,
-        "contributions": contributions,
-    })
+    return templates.TemplateResponse(
+        request,
+        "contributions/_batch_result.html",
+        {
+            "count": len(contributions),
+            "total": total,
+            "contributions": contributions,
+        },
+    )
 
 
 @router.delete("/api/contributions/{contribution_id}")
-async def cancel_contribution(
-    contribution_id: str, admin: User = Depends(require_admin)
-):
+async def cancel_contribution(contribution_id: str, admin: User = Depends(require_admin)):
     db = get_db()
     existing = await contribution_service.get_contribution(db, contribution_id)
     if not existing:

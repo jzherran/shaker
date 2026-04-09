@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
-from ..dependencies import templates, get_db
-from ..auth import require_approved_user, require_admin
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from ..auth import require_admin, require_approved_user
+from ..dependencies import get_db, templates
 from ..models.user import User
 from ..services import account_service, user_service
 
@@ -18,8 +19,11 @@ async def accounts_list(
         accounts = await account_service.get_all_accounts(db, status=status)
         pending_users = []
         merged_users = []
+        merge_requests = []
         if status == "pending" or status is None:
             pending_users = await user_service.get_pending_users(db)
+        if status == "merge_requests" or status is None:
+            merge_requests = await user_service.get_pending_merge_requests(db)
         if status == "merged" or status is None:
             merged_users = await user_service.get_merged_users(db)
     else:
@@ -27,15 +31,21 @@ async def accounts_list(
         accounts = [account] if account else []
         pending_users = []
         merged_users = []
+        merge_requests = []
 
-    return templates.TemplateResponse(request, "accounts/list.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "accounts": accounts,
-        "pending_users": pending_users,
-        "merged_users": merged_users,
-        "filter_status": status,
-    })
+    return templates.TemplateResponse(
+        request,
+        "accounts/list.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "accounts": accounts,
+            "pending_users": pending_users,
+            "merge_requests": merge_requests,
+            "merged_users": merged_users,
+            "filter_status": status,
+        },
+    )
 
 
 @router.get("/accounts/{account_id}")
@@ -53,11 +63,15 @@ async def account_detail(
     if user.role != "admin" and summary.user_id != user.id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    return templates.TemplateResponse(request, "accounts/detail.html", {
-        "user": user,
-        "is_admin": user.role == "admin",
-        "account": summary,
-    })
+    return templates.TemplateResponse(
+        request,
+        "accounts/detail.html",
+        {
+            "user": user,
+            "is_admin": user.role == "admin",
+            "account": summary,
+        },
+    )
 
 
 @router.post("/api/accounts")
@@ -77,9 +91,7 @@ async def create_account(request: Request, admin: User = Depends(require_admin))
 
 
 @router.patch("/api/accounts/{account_id}")
-async def update_account(
-    account_id: str, request: Request, admin: User = Depends(require_admin)
-):
+async def update_account(account_id: str, request: Request, admin: User = Depends(require_admin)):
     db = get_db()
     body = await request.json()
     status = body.get("status")

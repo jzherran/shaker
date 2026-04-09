@@ -11,15 +11,15 @@
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('accounts.balance') }}</p>
-        <p class="text-2xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(account.balance) }}</p>
+        <p class="text-2xl font-medium text-primary-dark mt-1">{{ account.balance|cop }}</p>
     </div>
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('accounts.total_contributions') }}</p>
-        <p class="text-2xl font-medium text-primary mt-1">${{ "%.2f"|format(account.total_contributions) }}</p>
+        <p class="text-2xl font-medium text-primary mt-1">{{ account.total_contributions|cop }}</p>
     </div>
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('accounts.loan_disbursements') }}</p>
-        <p class="text-2xl font-medium text-amber-700 mt-1">${{ "%.2f"|format(account.total_loan_disbursements) }}</p>
+        <p class="text-2xl font-medium text-amber-700 mt-1">{{ account.total_loan_disbursements|cop }}</p>
     </div>
     <div class="md-card p-5 rounded-xl">
         <p class="text-sm font-medium text-slate-600">{{ t('accounts.active_loans') }}</p>

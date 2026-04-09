@@ -1,6 +1,6 @@
 from supabase import Client
+
 from ..models.account import Account, AccountCreate, AccountSummary
-from typing import Optional
 
 
 def _account_from_row(row: dict) -> Account:
@@ -19,31 +19,31 @@ def _account_from_row(row: dict) -> Account:
 
 
 async def create_account(db: Client, data: AccountCreate) -> Account:
-    result = db.table("accounts").insert({
-        "user_id": data.user_id,
-        "account_number": data.account_number,
-    }).execute()
+    result = (
+        db.table("accounts")
+        .insert(
+            {
+                "user_id": data.user_id,
+                "account_number": data.account_number,
+            }
+        )
+        .execute()
+    )
     row = result.data[0]
     # Fetch with user join
-    full = db.table("accounts").select(
-        "*, users(full_name)"
-    ).eq("id", row["id"]).execute()
+    full = db.table("accounts").select("*, users(full_name)").eq("id", row["id"]).execute()
     return _account_from_row(full.data[0])
 
 
-async def get_account(db: Client, account_id: str) -> Optional[Account]:
-    result = db.table("accounts").select(
-        "*, users(full_name)"
-    ).eq("id", account_id).execute()
+async def get_account(db: Client, account_id: str) -> Account | None:
+    result = db.table("accounts").select("*, users(full_name)").eq("id", account_id).execute()
     if not result.data:
         return None
     return _account_from_row(result.data[0])
 
 
-async def get_account_by_user(db: Client, user_id: str) -> Optional[Account]:
-    result = db.table("accounts").select(
-        "*, users(full_name)"
-    ).eq("user_id", user_id).execute()
+async def get_account_by_user(db: Client, user_id: str) -> Account | None:
+    result = db.table("accounts").select("*, users(full_name)").eq("user_id", user_id).execute()
     if not result.data:
         return None
     return _account_from_row(result.data[0])
@@ -58,11 +58,21 @@ async def get_all_accounts(db: Client, status: str = None) -> list[Account]:
     return [_account_from_row(row) for row in result.data]
 
 
-async def get_account_summary(db: Client, account_id: str) -> Optional[AccountSummary]:
+async def require_active_account(db: Client, account_id: str) -> Account:
+    """Ensure the account exists and is active (contributions, loans, etc.)."""
+    account = await get_account(db, account_id)
+    if not account:
+        raise ValueError("Account not found")
+    if account.status != "active":
+        raise ValueError("Only active accounts can be used for this operation")
+    return account
+
+
+async def get_account_summary(db: Client, account_id: str) -> AccountSummary | None:
     # Join account with user data
-    result = db.table("accounts").select(
-        "*, users(full_name, email)"
-    ).eq("id", account_id).execute()
+    result = (
+        db.table("accounts").select("*, users(full_name, email)").eq("id", account_id).execute()
+    )
 
     if not result.data:
         return None
@@ -71,29 +81,37 @@ async def get_account_summary(db: Client, account_id: str) -> Optional[AccountSu
     user_data = row.pop("users", {})
 
     # Get contribution totals
-    contrib_result = db.table("contributions").select(
-        "amount"
-    ).eq("account_id", account_id).eq("status", "completed").execute()
+    contrib_result = (
+        db.table("contributions")
+        .select("amount")
+        .eq("account_id", account_id)
+        .eq("status", "completed")
+        .execute()
+    )
     total_contributions = sum(c["amount"] for c in contrib_result.data)
 
     # Get last contribution date
-    last_contrib = db.table("contributions").select(
-        "created_at"
-    ).eq("account_id", account_id).eq(
-        "status", "completed"
-    ).order("created_at", desc=True).limit(1).execute()
+    last_contrib = (
+        db.table("contributions")
+        .select("created_at")
+        .eq("account_id", account_id)
+        .eq("status", "completed")
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
     last_contribution_at = last_contrib.data[0]["created_at"] if last_contrib.data else None
 
     # Get active loans count and total disbursements
-    loans_result = db.table("loans").select(
-        "amount_approved, status"
-    ).eq("account_id", account_id).in_(
-        "status", ["approved", "active"]
-    ).execute()
-    active_loans_count = len(loans_result.data)
-    total_disbursements = sum(
-        l["amount_approved"] or 0 for l in loans_result.data
+    loans_result = (
+        db.table("loans")
+        .select("amount_approved, status")
+        .eq("account_id", account_id)
+        .in_("status", ["approved", "active"])
+        .execute()
     )
+    active_loans_count = len(loans_result.data)
+    total_disbursements = sum(loan["amount_approved"] or 0 for loan in loans_result.data)
 
     return AccountSummary(
         id=row["id"],
@@ -111,24 +129,29 @@ async def get_account_summary(db: Client, account_id: str) -> Optional[AccountSu
     )
 
 
-async def update_account_status(db: Client, account_id: str, status: str) -> Optional[Account]:
-    result = db.table("accounts").update(
-        {"status": status, "updated_at": "now()"}
-    ).eq("id", account_id).execute()
+async def update_account_status(db: Client, account_id: str, status: str) -> Account | None:
+    result = (
+        db.table("accounts")
+        .update({"status": status, "updated_at": "now()"})
+        .eq("id", account_id)
+        .execute()
+    )
     if not result.data:
         return None
     # Re-fetch with user join
-    full = db.table("accounts").select(
-        "*, users(full_name)"
-    ).eq("id", account_id).execute()
+    full = db.table("accounts").select("*, users(full_name)").eq("id", account_id).execute()
     return _account_from_row(full.data[0])
 
 
 async def generate_account_number(db: Client) -> str:
     """Generate the next sequential account number like FON-0001."""
-    result = db.table("accounts").select(
-        "account_number"
-    ).order("account_number", desc=True).limit(1).execute()
+    result = (
+        db.table("accounts")
+        .select("account_number")
+        .order("account_number", desc=True)
+        .limit(1)
+        .execute()
+    )
 
     if not result.data:
         return "FON-0001"

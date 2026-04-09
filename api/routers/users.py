@@ -12,8 +12,7 @@ router = APIRouter()
 async def merge_requests_page(request: Request, admin: User = Depends(require_admin)):
     db = get_db()
     merge_requests = await user_service.get_pending_merge_requests(db)
-    return templates.TemplateResponse("admin/merge_requests.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "admin/merge_requests.html", {
         "user": admin,
         "is_admin": True,
         "merge_requests": merge_requests,

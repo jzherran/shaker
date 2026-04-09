@@ -34,8 +34,7 @@ async def contributions_list(
     if user.role == "admin":
         accounts = await account_service.get_all_accounts(db)
 
-    return templates.TemplateResponse("contributions/list.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "contributions/list.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "contributions": contributions,
@@ -54,16 +53,14 @@ async def contribution_form(
 
     if user.role == "admin":
         accounts = await account_service.get_all_accounts(db)
-        return templates.TemplateResponse("contributions/form.html", {
-            "request": request,
+        return templates.TemplateResponse(request, "contributions/form.html", {
             "user": user,
             "is_admin": True,
             "accounts": accounts,
         })
     else:
         account = await account_service.get_account_by_user(db, user.id)
-        return templates.TemplateResponse("contributions/form.html", {
-            "request": request,
+        return templates.TemplateResponse(request, "contributions/form.html", {
             "user": user,
             "is_admin": False,
             "account": account,
@@ -77,8 +74,7 @@ async def batch_contribution_form(
 ):
     db = get_db()
     users_accounts = await user_service.get_active_users_with_accounts(db)
-    return templates.TemplateResponse("contributions/batch_form.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "contributions/batch_form.html", {
         "user": admin,
         "is_admin": True,
         "users_accounts": users_accounts,
@@ -130,8 +126,7 @@ async def create_contribution_htmx(
     contribution = await contribution_service.record_contribution(
         db, data, created_by=user.id
     )
-    return templates.TemplateResponse("contributions/_row.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "contributions/_row.html", {
         "c": contribution,
     })
 
@@ -177,8 +172,7 @@ async def create_batch_contributions_htmx(
     )
 
     total = sum(c.amount for c in contributions)
-    return templates.TemplateResponse("contributions/_batch_result.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "contributions/_batch_result.html", {
         "count": len(contributions),
         "total": total,
         "contributions": contributions,

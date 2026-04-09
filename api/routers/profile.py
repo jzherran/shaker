@@ -9,8 +9,7 @@ router = APIRouter()
 
 @router.get("/profile")
 async def profile_page(request: Request, user: User = Depends(get_current_user)):
-    return templates.TemplateResponse("profile.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "profile.html", {
         "user": user,
         "is_admin": user.role == "admin",
     })
@@ -40,8 +39,7 @@ async def update_profile_htmx(request: Request, user: User = Depends(get_current
 
     updated_user = await user_service.update_user_profile(db, user.id, update_data)
 
-    return templates.TemplateResponse("profile.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "profile.html", {
         "user": updated_user,
         "is_admin": updated_user.role == "admin",
         "success": True,

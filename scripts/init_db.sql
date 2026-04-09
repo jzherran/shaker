@@ -1,3 +1,12 @@
+DELETE FROM public.loan_guarantors;
+DELETE FROM public.loan_payments;
+DELETE FROM public.loans;
+DELETE FROM public.contributions;
+DELETE FROM public.accounts;
+DELETE FROM public.balance_snapshots;
+DELETE FROM public.fund_summary;
+DELETE FROM public.users;
+
 -- Shaker (FONAFAHE) Database Schema
 -- Run this in the Supabase SQL Editor to initialize the database.
 

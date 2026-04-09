@@ -26,8 +26,7 @@ async def login_page(request: Request):
     if user:
         return RedirectResponse(url="/dashboard", status_code=302)
     settings = get_settings()
-    return templates.TemplateResponse("login.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "login.html", {
         "supabase_url": settings.supabase_url,
         "supabase_key": settings.supabase_key,
         "app_env": settings.app_env,
@@ -37,9 +36,7 @@ async def login_page(request: Request):
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     """Handle Supabase OAuth callback. The frontend JS sends us the session."""
-    return templates.TemplateResponse("auth_callback.html", {
-        "request": request,
-    })
+    return templates.TemplateResponse(request, "auth_callback.html")
 
 
 @router.post("/auth/session")
@@ -107,8 +104,7 @@ async def enrollment_page(request: Request, user: User = Depends(get_current_use
     db = get_db()
     merge_status = await user_service.get_user_merge_status(db, user.id)
 
-    return templates.TemplateResponse("enrollment.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "enrollment.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "merge_pending": merge_status == "pending",
@@ -121,8 +117,7 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
     national_id = form.get("national_id", "").strip()
 
     if not national_id or len(national_id) < 5:
-        return templates.TemplateResponse("enrollment.html", {
-            "request": request,
+        return templates.TemplateResponse(request, "enrollment.html", {
             "user": user,
             "is_admin": user.role == "admin",
             "error": "National ID must be at least 5 characters.",
@@ -135,8 +130,7 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
         return RedirectResponse(url="/dashboard", status_code=302)
 
     # merge_requested or already_pending
-    return templates.TemplateResponse("enrollment.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "enrollment.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "merge_pending": True,
@@ -164,8 +158,7 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
             db, account_id=account.id, limit=5
         )
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "dashboard.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "account": account,

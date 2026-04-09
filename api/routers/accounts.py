@@ -16,8 +16,7 @@ async def accounts_list(request: Request, user: User = Depends(get_current_user)
         account = await account_service.get_account_by_user(db, user.id)
         accounts = [account] if account else []
 
-    return templates.TemplateResponse("accounts/list.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "accounts/list.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "accounts": accounts,
@@ -39,8 +38,7 @@ async def account_detail(
     if user.role != "admin" and summary.user_id != user.id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    return templates.TemplateResponse("accounts/detail.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "accounts/detail.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "account": summary,

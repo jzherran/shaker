@@ -21,8 +21,7 @@ async def balance_report_page(
         if account:
             accounts = [account]
 
-    return templates.TemplateResponse("reports/balance.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "reports/balance.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "accounts": accounts,
@@ -35,8 +34,7 @@ async def fund_report_page(
 ):
     db = get_db()
     fund = await report_service.get_fund_summary(db)
-    return templates.TemplateResponse("reports/fund.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "reports/fund.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "fund": fund,

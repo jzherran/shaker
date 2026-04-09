@@ -3,13 +3,20 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="/contributions" class="text-indigo-600 hover:underline text-sm">&larr; Back to contributions</a>
-    <h1 class="text-2xl font-bold text-gray-800 mt-2">Record New Contribution</h1>
+    <a href="/contributions" class="text-sm font-medium text-primary hover:underline">&larr; Back to contributions</a>
+    <h1 class="text-2xl font-medium text-slate-900 mt-2">Record New Contribution</h1>
+    {% if is_admin %}
+    <p class="text-sm text-slate-600 mt-1">
+        Recording for a single account.
+        <a href="/contributions/batch" class="font-medium text-primary hover:underline">Use Batch Mode</a> to record for multiple members at once.
+    </p>
+    {% endif %}
 </div>
 
-<div class="bg-white rounded-xl shadow p-6 max-w-lg">
+<div class="md-card max-w-lg rounded-xl p-6">
     <form hx-post="/api/contributions/htmx" hx-target="#result" hx-swap="innerHTML">
         <div class="space-y-4">
+            {% if is_admin %}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Account</label>
                 <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
@@ -19,10 +26,20 @@
                     {% endfor %}
                 </select>
             </div>
+            {% else %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Account</label>
+                <span class="block text-gray-600 bg-gray-50 px-3 py-2 rounded-md border border-gray-200 text-sm">
+                    {{ account.owner_name or account.account_number }} (Balance: ${{ "%.2f"|format(account.balance) }})
+                </span>
+                <input type="hidden" name="account_id" value="{{ account.id }}">
+            </div>
+            {% endif %}
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                 <input type="number" name="amount" step="0.01" min="0.01" required
+                    value="{{ default_amount or '' }}"
                     class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00">
             </div>
 
@@ -61,7 +78,7 @@
             </div>
 
             <button type="submit"
-                class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition">
+                class="w-full rounded-full bg-primary py-3 text-sm font-medium text-white shadow-md2 hover:bg-primary-dark transition">
                 Record Contribution
             </button>
         </div>

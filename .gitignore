@@ -89,3 +89,6 @@ ENV/
 .ropeproject
 .vercel
 .env*.local
+
+#MACOS
+.DS_Store

@@ -2,12 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0D47A1">
     <title>Authenticating...</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Roboto', 'system-ui', 'sans-serif'] },
+                },
+            },
+        };
+    </script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="text-center">
-        <p id="status" class="text-gray-500 text-lg">Signing you in...</p>
+<body class="min-h-screen bg-[#F5F9FC] font-sans antialiased flex items-center justify-center">
+    <div class="text-center px-4">
+        <p id="status" class="text-lg font-medium text-slate-700">Signing you in...</p>
     </div>
 
     <script>
@@ -15,8 +29,6 @@
             const statusEl = document.getElementById('status');
 
             try {
-                // Supabase OAuth puts tokens in the URL hash fragment
-                // Format: #access_token=...&token_type=bearer&...
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 const accessToken = hashParams.get('access_token');
 
@@ -26,17 +38,14 @@
                     return;
                 }
 
-                // Decode the JWT to extract user info (middle segment is the payload)
                 const parts = accessToken.split('.');
                 if (parts.length !== 3) {
                     throw new Error('Invalid token format');
                 }
 
-                // Base64url decode
                 const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
                 const payload = JSON.parse(atob(base64));
 
-                // Send user info to our backend to create session cookie
                 const res = await fetch('/auth/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -54,12 +63,12 @@
                 } else {
                     const err = await res.json().catch(() => ({}));
                     statusEl.textContent = 'Login failed: ' + (err.detail || 'Unknown error');
-                    statusEl.className = 'text-red-500 text-lg';
+                    statusEl.className = 'text-lg font-medium text-red-600';
                     setTimeout(() => { window.location.href = '/login'; }, 3000);
                 }
             } catch (e) {
                 statusEl.textContent = 'Error: ' + e.message;
-                statusEl.className = 'text-red-500 text-lg';
+                statusEl.className = 'text-lg font-medium text-red-600';
                 setTimeout(() => { window.location.href = '/login'; }, 3000);
             }
         })();

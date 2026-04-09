@@ -3,13 +3,13 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Accounts</h1>
+    <h1 class="text-2xl font-medium text-slate-900">Accounts</h1>
 </div>
 
-<div class="bg-white rounded-xl shadow overflow-hidden">
+<div class="md-card overflow-hidden rounded-xl">
     <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-            <tr class="text-left text-gray-500">
+        <thead class="bg-slate-50/80">
+            <tr class="text-left text-slate-600">
                 <th class="px-6 py-3">Member</th>
                 <th class="px-6 py-3">Balance</th>
                 <th class="px-6 py-3">Status</th>
@@ -19,12 +19,12 @@
         </thead>
         <tbody>
             {% for a in accounts %}
-            <tr class="border-t hover:bg-gray-50">
+            <tr class="border-t border-slate-100 hover:bg-primary-container/25">
                 <td class="px-6 py-4 font-medium">{{ a.owner_name or a.account_number }}</td>
-                <td class="px-6 py-4 font-semibold text-indigo-700">${{ "%.2f"|format(a.balance) }}</td>
+                <td class="px-6 py-4 font-medium text-primary-dark">${{ "%.2f"|format(a.balance) }}</td>
                 <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded text-xs
-                        {% if a.status == 'active' %}bg-green-100 text-green-700
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                        {% if a.status == 'active' %}bg-emerald-100 text-emerald-800
                         {% elif a.status == 'suspended' %}bg-red-100 text-red-700
                         {% else %}bg-gray-100 text-gray-700{% endif %}">
                         {{ a.status }}
@@ -32,13 +32,13 @@
                 </td>
                 <td class="px-6 py-4 text-gray-500">{{ a.created_at[:10] if a.created_at is string else a.created_at.strftime('%Y-%m-%d') }}</td>
                 <td class="px-6 py-4">
-                    <a href="/accounts/{{ a.id }}" class="text-indigo-600 hover:underline">View</a>
+                    <a href="/accounts/{{ a.id }}" class="font-medium text-primary hover:underline">View</a>
                 </td>
             </tr>
             {% endfor %}
             {% if not accounts %}
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-gray-400">No accounts found</td>
+                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No accounts found</td>
             </tr>
             {% endif %}
         </tbody>

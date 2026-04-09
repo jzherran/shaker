@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Batch Contributions - FONAFAHE{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/contributions" class="text-sm font-medium text-primary hover:underline">&larr; Back to contributions</a>
+    <h1 class="text-2xl font-medium text-slate-900 mt-2">Batch Record Contributions</h1>
+    <p class="mt-1 text-sm text-slate-600">Select members and record contributions for all at once.</p>
+</div>
+
+<div class="md-card rounded-xl p-6">
+    <form hx-post="/api/contributions/batch/htmx" hx-target="#batch-result" hx-swap="innerHTML">
+        <!-- Shared fields -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 pb-6 border-b">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select name="contribution_type" class="w-full border rounded-lg px-3 py-2 text-sm">
+                    <option value="regular">Regular</option>
+                    <option value="extraordinary">Extraordinary</option>
+                    <option value="initial">Initial</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <input type="number" name="period_year" value="2026" required
+                    class="w-full border rounded-lg px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                <input type="number" name="period_month" min="1" max="12" required
+                    class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1-12">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input type="text" name="description" class="w-full border rounded-lg px-3 py-2 text-sm"
+                    placeholder="Monthly contribution">
+            </div>
+        </div>
+
+        <!-- Members table -->
+        <div class="mb-4">
+            <label class="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input type="checkbox" id="select-all" class="rounded border-gray-300">
+                <span>Select All Members</span>
+            </label>
+        </div>
+
+        {% if not users_accounts %}
+        <div class="py-8 text-center text-slate-500">No active accounts found.</div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50/80">
+                    <tr class="text-left text-slate-600">
+                        <th class="px-4 py-3 w-10"></th>
+                        <th class="px-4 py-3">Member</th>
+                        <th class="px-4 py-3">Account</th>
+                        <th class="px-4 py-3 text-right">Balance</th>
+                        <th class="px-4 py-3">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ua in users_accounts %}
+                    <tr class="border-t border-slate-100 hover:bg-primary-container/25">
+                        <td class="px-4 py-3">
+                            <input type="checkbox" name="selected_accounts" value="{{ ua.account_id }}"
+                                   class="member-checkbox rounded border-gray-300">
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium">{{ ua.full_name }}</div>
+                            <div class="text-xs text-gray-500">{{ ua.email }}</div>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-gray-600">{{ ua.account_number }}</td>
+                        <td class="px-4 py-3 text-right font-medium text-primary-dark">${{ "%.2f"|format(ua.balance) }}</td>
+                        <td class="px-4 py-3">
+                            <input type="number" name="amount_{{ ua.account_id }}"
+                                   value="{{ ua.default_amount or '' }}"
+                                   step="0.01" min="0.01"
+                                   placeholder="0.00"
+                                   class="border rounded px-2 py-1 text-sm w-28">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="mt-6">
+            <button type="submit"
+                class="rounded-full bg-primary px-6 py-3 text-sm font-medium text-white shadow-md2 transition hover:bg-primary-dark">
+                Record All Selected Contributions
+            </button>
+        </div>
+    </form>
+
+    <div id="batch-result" class="mt-4"></div>
+</div>
+
+<script>
+document.getElementById('select-all').addEventListener('change', function() {
+    document.querySelectorAll('.member-checkbox').forEach(cb => {
+        cb.checked = this.checked;
+    });
+});
+</script>
+{% endblock %}

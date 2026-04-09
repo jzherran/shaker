@@ -22,8 +22,7 @@ async def loans_list(
 
     loans = await loan_service.get_loans(db, account_id=account_id, status=status)
 
-    return templates.TemplateResponse("loans/list.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "loans/list.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "loans": loans,
@@ -41,8 +40,7 @@ async def loan_request_form(
     if user.role == "admin":
         accounts = await account_service.get_all_accounts(db)
 
-    return templates.TemplateResponse("loans/request.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "loans/request.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "account": account,
@@ -82,8 +80,7 @@ async def loan_detail(
         "*, accounts(account_number, users(full_name))"
     ).eq("loan_id", loan_id).execute()
 
-    return templates.TemplateResponse("loans/detail.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "loans/detail.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "loan": loan,

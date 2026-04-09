@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Merge Requests - FONAFAHE{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-medium text-slate-900">Identity Merge Requests</h1>
+</div>
+
+{% if not merge_requests %}
+<div class="md-card rounded-xl p-8 text-center text-slate-500">
+    No pending merge requests.
+</div>
+{% else %}
+<div class="md-card overflow-hidden rounded-xl">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50/80">
+            <tr class="text-left text-slate-600">
+                <th class="px-6 py-3">Requesting User</th>
+                <th class="px-6 py-3">Target User</th>
+                <th class="px-6 py-3">National ID</th>
+                <th class="px-6 py-3">Requested</th>
+                <th class="px-6 py-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mr in merge_requests %}
+            <tr class="border-t border-slate-100 hover:bg-primary-container/20" id="merge-{{ mr.id }}">
+                <td class="px-6 py-3">
+                    <div class="font-medium">{{ mr.requesting_user_name }}</div>
+                    <div class="text-xs text-gray-500">{{ mr.requesting_user_email }}</div>
+                </td>
+                <td class="px-6 py-3">
+                    <div class="font-medium">{{ mr.target_user_name }}</div>
+                    <div class="text-xs text-gray-500">{{ mr.target_user_email }}</div>
+                </td>
+                <td class="px-6 py-3 font-mono">{{ mr.national_id }}</td>
+                <td class="px-6 py-3 text-gray-600">
+                    {{ mr.created_at[:10] if mr.created_at is string else mr.created_at.strftime('%Y-%m-%d') }}
+                </td>
+                <td class="px-6 py-3 space-x-2">
+                    <button hx-post="/api/merge-requests/{{ mr.id }}/approve"
+                            hx-confirm="Approve this merge? The requesting user's account will be merged into the target user."
+                            hx-target="#merge-{{ mr.id }}"
+                            hx-swap="outerHTML"
+                            class="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-dark">
+                        Approve
+                    </button>
+                    <button hx-post="/api/merge-requests/{{ mr.id }}/reject"
+                            hx-confirm="Reject this merge request?"
+                            hx-target="#merge-{{ mr.id }}"
+                            hx-swap="outerHTML"
+                            class="rounded-full bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700">
+                        Reject
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

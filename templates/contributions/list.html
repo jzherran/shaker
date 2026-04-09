@@ -3,17 +3,22 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Contributions</h1>
-    {% if is_admin %}
-    <a href="/contributions/new" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">
-        + New Contribution
-    </a>
-    {% endif %}
+    <h1 class="text-2xl font-medium text-slate-900">Contributions</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="/contributions/new" class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">
+            + New Contribution
+        </a>
+        {% if is_admin %}
+        <a href="/contributions/batch" class="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 transition">
+            + Batch
+        </a>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Filters -->
 {% if is_admin %}
-<form method="get" class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap gap-4 items-end">
+<form method="get" class="md-card rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end">
     <div>
         <label class="block text-xs text-gray-500 mb-1">Account</label>
         <select name="account_id" class="border rounded px-3 py-2 text-sm">
@@ -31,14 +36,14 @@
         <label class="block text-xs text-gray-500 mb-1">Month</label>
         <input type="number" name="month" value="{{ filter_month or '' }}" min="1" max="12" placeholder="1-12" class="border rounded px-3 py-2 text-sm w-20">
     </div>
-    <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Filter</button>
+    <button type="submit" class="rounded-full bg-primary-dark px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary transition">Filter</button>
 </form>
 {% endif %}
 
-<div class="bg-white rounded-xl shadow overflow-hidden">
+<div class="md-card overflow-hidden rounded-xl">
     <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-            <tr class="text-left text-gray-500">
+        <thead class="bg-slate-50/80">
+            <tr class="text-left text-slate-600">
                 <th class="px-6 py-3">Date</th>
                 <th class="px-6 py-3">Type</th>
                 <th class="px-6 py-3">Period</th>
@@ -53,7 +58,7 @@
             {% endfor %}
             {% if not contributions %}
             <tr>
-                <td colspan="6" class="px-6 py-8 text-center text-gray-400">No contributions found</td>
+                <td colspan="6" class="px-6 py-8 text-center text-slate-500">No contributions found</td>
             </tr>
             {% endif %}
         </tbody>

@@ -3,44 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0D47A1">
     <title>{% block title %}Shaker - FONAFAHE{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#1565C0',
+                            dark: '#0D47A1',
+                            light: '#42A5F5',
+                            container: '#E3F2FD',
+                            'on-container': '#0D47A1',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        md1: '0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
+                        md2: '0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
+                        md3: '0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)',
+                    },
+                },
+            },
+        };
+    </script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link rel="stylesheet" href="/static/css/custom.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="md-surface-app min-h-screen font-sans antialiased text-slate-800">
     {% if user %}
-    <nav class="bg-indigo-700 text-white shadow-lg">
+    <nav class="bg-primary-dark text-white shadow-md2">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
+            <div class="flex items-center justify-between h-14 md:h-16">
                 <div class="flex items-center space-x-8">
-                    <a href="/dashboard" class="text-xl font-bold">FONAFAHE</a>
-                    <div class="hidden md:flex space-x-4">
-                        <a href="/dashboard" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Dashboard</a>
-                        <a href="/accounts" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Accounts</a>
-                        <a href="/contributions" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Contributions</a>
-                        <a href="/loans" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Loans</a>
-                        <a href="/reports/balance" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Reports</a>
+                    <a href="/dashboard" class="text-xl font-medium tracking-tight">FONAFAHE</a>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Dashboard</a>
+                        <a href="/accounts" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Accounts</a>
+                        <a href="/contributions" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Contributions</a>
+                        <a href="/loans" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Loans</a>
+                        <a href="/reports/balance" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Reports</a>
                         {% if is_admin %}
-                        <a href="/reports/fund" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Fund</a>
+                        <a href="/reports/fund" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Fund</a>
+                        <a href="/admin/merge-requests" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Merges</a>
                         {% endif %}
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-sm">{{ user.full_name }}</span>
+                    <a href="/profile" class="text-sm font-medium opacity-95 hover:underline">{{ user.full_name }}</a>
                     {% if is_admin %}
-                    <span class="bg-yellow-500 text-xs px-2 py-1 rounded">Admin</span>
+                    <span class="bg-amber-400 text-primary-dark text-xs font-medium px-2 py-1 rounded-full">Admin</span>
                     {% endif %}
-                    <a href="/auth/logout" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Logout</a>
+                    <a href="/auth/logout" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Logout</a>
                 </div>
             </div>
         </div>
-        <!-- Mobile menu -->
-        <div class="md:hidden px-4 pb-3 space-y-1">
-            <a href="/dashboard" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Dashboard</a>
-            <a href="/contributions" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Contributions</a>
-            <a href="/loans" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Loans</a>
-            <a href="/reports/balance" class="block hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Reports</a>
+        <div class="md:hidden px-4 pb-3 space-y-1 border-t border-white/10">
+            <a href="/dashboard" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Dashboard</a>
+            <a href="/contributions" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Contributions</a>
+            <a href="/loans" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Loans</a>
+            <a href="/reports/balance" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Reports</a>
         </div>
     </nav>
     {% endif %}
@@ -49,7 +78,7 @@
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 mt-4">
         {% for msg in messages %}
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-2">
+        <div class="bg-primary-container/80 border border-primary/20 text-primary-on-container px-4 py-3 rounded-xl mb-2 shadow-md1">
             {{ msg }}
         </div>
         {% endfor %}
@@ -61,8 +90,8 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center text-gray-400 text-sm py-6">
-        Shaker - FONAFAHE &copy; 2025
+    <footer class="text-center text-slate-500 text-sm py-8 border-t border-slate-200/80">
+        Shaker - FONAFAHE &copy; 2026
     </footer>
 </body>
 </html>

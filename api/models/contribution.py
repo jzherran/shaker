@@ -26,3 +26,16 @@ class Contribution(BaseModel):
     created_by: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+
+
+class BatchContributionItem(BaseModel):
+    account_id: str
+    amount: float = Field(..., gt=0)
+
+
+class BatchContributionCreate(BaseModel):
+    items: list[BatchContributionItem]
+    contribution_type: str = "regular"
+    period_year: int
+    period_month: int = Field(..., ge=1, le=12)
+    description: Optional[str] = None

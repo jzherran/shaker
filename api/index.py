@@ -26,13 +26,15 @@ if os.path.isdir(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Register routers
-from .routers import pages, accounts, contributions, loans, reports
+from .routers import pages, accounts, contributions, loans, reports, users, profile
 
 app.include_router(pages.router)
 app.include_router(accounts.router)
 app.include_router(contributions.router)
 app.include_router(loans.router)
 app.include_router(reports.router)
+app.include_router(users.router)
+app.include_router(profile.router)
 
 
 @app.get("/api/health")

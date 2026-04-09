@@ -1,5 +1,6 @@
+import json
 from supabase import Client
-from ..models.contribution import Contribution, ContributionCreate
+from ..models.contribution import Contribution, ContributionCreate, BatchContributionCreate
 from typing import Optional
 
 
@@ -61,3 +62,33 @@ async def get_contribution(db: Client, contribution_id: str) -> Optional[Contrib
     if not result.data:
         return None
     return Contribution(**result.data[0])
+
+
+async def record_contributions_batch(
+    db: Client, data: BatchContributionCreate, created_by: str
+) -> list[Contribution]:
+    """Record multiple contributions atomically using the batch DB function."""
+    items_json = json.dumps([
+        {"account_id": item.account_id, "amount": float(item.amount)}
+        for item in data.items
+    ])
+
+    result = db.rpc("record_contributions_batch", {
+        "p_data": items_json,
+        "p_contribution_type": data.contribution_type,
+        "p_period_year": data.period_year,
+        "p_period_month": data.period_month,
+        "p_description": data.description or "",
+        "p_created_by": created_by,
+    }).execute()
+
+    # result.data is a JSONB array of contribution IDs
+    contribution_ids = result.data if isinstance(result.data, list) else json.loads(result.data)
+
+    contributions = []
+    for cid in contribution_ids:
+        row = db.table("contributions").select("*").eq("id", cid).execute()
+        if row.data:
+            contributions.append(Contribution(**row.data[0]))
+
+    return contributions

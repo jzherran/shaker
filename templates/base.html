@@ -23,11 +23,12 @@
                         <a href="/reports/balance" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Reports</a>
                         {% if is_admin %}
                         <a href="/reports/fund" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Fund</a>
+                        <a href="/admin/merge-requests" class="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm">Merges</a>
                         {% endif %}
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-sm">{{ user.full_name }}</span>
+                    <a href="/profile" class="text-sm hover:underline">{{ user.full_name }}</a>
                     {% if is_admin %}
                     <span class="bg-yellow-500 text-xs px-2 py-1 rounded">Admin</span>
                     {% endif %}

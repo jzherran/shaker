@@ -30,11 +30,33 @@ async def get_current_user_or_none(request: Request) -> Optional[User]:
         return None
 
     db = get_db()
-    result = db.table("users").select("*").eq("auth_id", auth_id).execute()
-    if not result.data:
-        return None
+    # Try primary auth_id lookup (active users only)
+    result = (
+        db.table("users").select("*")
+        .eq("auth_id", auth_id)
+        .eq("is_active", True)
+        .execute()
+    )
+    if result.data:
+        return User(**result.data[0])
 
-    return User(**result.data[0])
+    # Fall through to check auth aliases (merged users)
+    alias_result = (
+        db.table("user_auth_aliases").select("user_id")
+        .eq("auth_id", auth_id)
+        .execute()
+    )
+    if alias_result.data:
+        user_result = (
+            db.table("users").select("*")
+            .eq("id", alias_result.data[0]["user_id"])
+            .eq("is_active", True)
+            .execute()
+        )
+        if user_result.data:
+            return User(**user_result.data[0])
+
+    return None
 
 
 async def get_current_user(request: Request) -> User:

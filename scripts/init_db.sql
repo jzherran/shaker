@@ -13,6 +13,7 @@ CREATE TABLE public.users (
     full_name TEXT NOT NULL,
     phone TEXT,
     national_id TEXT,
+    default_contribution_amount NUMERIC(15, 2),
     role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -21,6 +22,38 @@ CREATE TABLE public.users (
 
 CREATE INDEX idx_users_auth_id ON public.users(auth_id);
 CREATE INDEX idx_users_email ON public.users(email);
+
+-- ============================================================
+-- USER AUTH ALIASES (maps secondary auth_ids after identity merge)
+-- ============================================================
+CREATE TABLE public.user_auth_aliases (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    auth_id UUID UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_auth_aliases_auth_id ON public.user_auth_aliases(auth_id);
+CREATE INDEX idx_user_auth_aliases_user_id ON public.user_auth_aliases(user_id);
+
+-- ============================================================
+-- IDENTITY MERGE REQUESTS (multi-email identity linking)
+-- ============================================================
+CREATE TABLE public.identity_merge_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    requesting_user_id UUID NOT NULL REFERENCES public.users(id),
+    target_user_id UUID NOT NULL REFERENCES public.users(id),
+    national_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'approved', 'rejected')),
+    reviewed_by UUID REFERENCES public.users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    reviewed_at TIMESTAMPTZ,
+    CHECK (requesting_user_id != target_user_id)
+);
+
+CREATE INDEX idx_merge_requests_status ON public.identity_merge_requests(status);
 
 -- ============================================================
 -- ACCOUNTS (each user has one savings account)
@@ -188,6 +221,13 @@ CREATE POLICY "Service role full access" ON public.balance_snapshots
 CREATE POLICY "Service role full access" ON public.fund_summary
     FOR ALL USING (true) WITH CHECK (true);
 
+ALTER TABLE public.user_auth_aliases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.identity_merge_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role full access" ON public.user_auth_aliases
+    FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON public.identity_merge_requests
+    FOR ALL USING (true) WITH CHECK (true);
+
 -- ============================================================
 -- POSTGRESQL FUNCTIONS (atomic operations)
 -- ============================================================
@@ -310,5 +350,127 @@ BEGIN
     UPDATE accounts
     SET balance = balance - v_amount, updated_at = NOW()
     WHERE id = v_account_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Approve an identity merge request atomically
+CREATE OR REPLACE FUNCTION approve_identity_merge(
+    p_merge_request_id UUID,
+    p_reviewed_by UUID
+) RETURNS VOID AS $$
+DECLARE
+    v_requesting_user_id UUID;
+    v_target_user_id UUID;
+    v_requesting_auth_id UUID;
+    v_requesting_email TEXT;
+    v_requesting_account_id UUID;
+    v_target_account_id UUID;
+    v_requesting_balance NUMERIC;
+    v_status TEXT;
+    v_active_loans INT;
+BEGIN
+    -- Validate merge request is pending
+    SELECT requesting_user_id, target_user_id, status
+    INTO v_requesting_user_id, v_target_user_id, v_status
+    FROM identity_merge_requests WHERE id = p_merge_request_id;
+
+    IF v_status IS NULL THEN
+        RAISE EXCEPTION 'Merge request not found';
+    END IF;
+    IF v_status != 'pending' THEN
+        RAISE EXCEPTION 'Merge request is not pending';
+    END IF;
+
+    -- Check requesting user has no active loans
+    SELECT COUNT(*) INTO v_active_loans
+    FROM loans l JOIN accounts a ON l.account_id = a.id
+    WHERE a.user_id = v_requesting_user_id
+      AND l.status IN ('approved', 'active');
+
+    IF v_active_loans > 0 THEN
+        RAISE EXCEPTION 'Cannot merge: requesting user has active loans';
+    END IF;
+
+    -- Get requesting user details
+    SELECT auth_id, email INTO v_requesting_auth_id, v_requesting_email
+    FROM users WHERE id = v_requesting_user_id;
+
+    -- Get account IDs and balances
+    SELECT id, balance INTO v_requesting_account_id, v_requesting_balance
+    FROM accounts WHERE user_id = v_requesting_user_id AND status = 'active';
+
+    SELECT id INTO v_target_account_id
+    FROM accounts WHERE user_id = v_target_user_id AND status = 'active';
+
+    -- Insert auth alias
+    INSERT INTO user_auth_aliases (user_id, auth_id, email)
+    VALUES (v_target_user_id, v_requesting_auth_id, v_requesting_email);
+
+    -- Transfer balance if any
+    IF v_requesting_balance > 0 AND v_requesting_account_id IS NOT NULL AND v_target_account_id IS NOT NULL THEN
+        UPDATE accounts SET balance = balance + v_requesting_balance, updated_at = NOW()
+        WHERE id = v_target_account_id;
+
+        -- Reassign contributions to target account
+        UPDATE contributions SET account_id = v_target_account_id, updated_at = NOW()
+        WHERE account_id = v_requesting_account_id;
+    END IF;
+
+    -- Deactivate requesting user's account
+    IF v_requesting_account_id IS NOT NULL THEN
+        UPDATE accounts SET status = 'inactive', balance = 0, updated_at = NOW()
+        WHERE id = v_requesting_account_id;
+    END IF;
+
+    -- Deactivate requesting user
+    UPDATE users SET is_active = FALSE, updated_at = NOW()
+    WHERE id = v_requesting_user_id;
+
+    -- Update merge request
+    UPDATE identity_merge_requests
+    SET status = 'approved', reviewed_by = p_reviewed_by, reviewed_at = NOW()
+    WHERE id = p_merge_request_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Record contributions in batch atomically
+CREATE OR REPLACE FUNCTION record_contributions_batch(
+    p_data JSONB,
+    p_contribution_type TEXT,
+    p_period_year INT,
+    p_period_month INT,
+    p_description TEXT,
+    p_created_by UUID
+) RETURNS JSONB AS $$
+DECLARE
+    v_item JSONB;
+    v_contribution_id UUID;
+    v_result JSONB := '[]'::JSONB;
+    v_account_id UUID;
+    v_amount NUMERIC;
+BEGIN
+    FOR v_item IN SELECT * FROM jsonb_array_elements(p_data)
+    LOOP
+        v_account_id := (v_item->>'account_id')::UUID;
+        v_amount := (v_item->>'amount')::NUMERIC;
+
+        INSERT INTO contributions (
+            account_id, amount, contribution_type,
+            period_year, period_month, description,
+            receipt_reference, created_by
+        ) VALUES (
+            v_account_id, v_amount, p_contribution_type,
+            p_period_year, p_period_month, p_description,
+            '', p_created_by
+        ) RETURNING id INTO v_contribution_id;
+
+        UPDATE accounts
+        SET balance = balance + v_amount, updated_at = NOW()
+        WHERE id = v_account_id;
+
+        v_result := v_result || to_jsonb(v_contribution_id::TEXT);
+    END LOOP;
+
+    RETURN v_result;
 END;
 $$ LANGUAGE plpgsql;

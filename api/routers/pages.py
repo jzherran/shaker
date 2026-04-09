@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Request, Depends, Response, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, Request, Depends, Response, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from ..dependencies import templates, get_db
+from ..i18n import locale_from_request, translate, translate_html
 from ..auth import (
     get_current_user, get_current_user_or_none,
     require_admin, create_session_token,
@@ -26,11 +29,44 @@ async def login_page(request: Request):
     if user:
         return RedirectResponse(url="/dashboard", status_code=302)
     settings = get_settings()
+    lang = locale_from_request(request)
+    login_js = {
+        "err_url": translate(lang, "login.js.err_url"),
+        "err_key": translate(lang, "login.js.err_key"),
+        "err_client": translate(lang, "login.js.err_client"),
+        "err_init": translate(lang, "login.js.err_init"),
+        "err_oauth": translate(lang, "login.js.err_oauth"),
+        "err_unexpected": translate(lang, "login.js.err_unexpected"),
+    }
     return templates.TemplateResponse(request, "login.html", {
         "supabase_url": settings.supabase_url,
         "supabase_key": settings.supabase_key,
         "app_env": settings.app_env,
+        "login_js": login_js,
     })
+
+
+@router.get("/set-language")
+async def set_language(
+    request: Request,
+    lang: str = Query("en"),
+    next_path: Optional[str] = Query(None, alias="next"),
+):
+    if lang not in ("en", "es"):
+        lang = "en"
+    dest = "/"
+    if next_path and next_path.startswith("/") and not next_path.startswith("//"):
+        dest = next_path
+    response = RedirectResponse(url=dest, status_code=302)
+    response.set_cookie(
+        "lang",
+        lang,
+        max_age=365 * 24 * 3600,
+        path="/",
+        samesite="lax",
+        httponly=False,
+    )
+    return response
 
 
 @router.get("/auth/callback")
@@ -120,7 +156,7 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
         return templates.TemplateResponse(request, "enrollment.html", {
             "user": user,
             "is_admin": user.role == "admin",
-            "error": "National ID must be at least 5 characters.",
+            "error": translate_html(request, "enrollment.error_short"),
         })
 
     db = get_db()

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Balance Reports - FONAFAHE{% endblock %}
+{% block title %}{{ t('meta.reports_balance') }}{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-medium text-slate-900 mb-6">Balance Reports</h1>
+<h1 class="text-2xl font-medium text-slate-900 mb-6">{{ t('reports.balance_title') }}</h1>
 
 <div class="md-card p-6 mb-6 rounded-xl">
     <form id="report-form" class="flex flex-wrap gap-4 items-end">
         <div>
-            <label class="block text-xs text-gray-500 mb-1">Account</label>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.account') }}</label>
             <select id="account_id" class="border rounded px-3 py-2 text-sm">
                 {% for a in accounts %}
                 <option value="{{ a.id }}">{{ a.owner_name or a.account_number }}</option>
@@ -15,30 +15,39 @@
             </select>
         </div>
         <div>
-            <label class="block text-xs text-gray-500 mb-1">Type</label>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.type') }}</label>
             <select id="snapshot_type" class="border rounded px-3 py-2 text-sm">
-                <option value="daily">Daily</option>
-                <option value="monthly" selected>Monthly</option>
-                <option value="yearly">Yearly</option>
+                <option value="daily">{{ t('reports.daily') }}</option>
+                <option value="monthly" selected>{{ t('reports.monthly') }}</option>
+                <option value="yearly">{{ t('reports.yearly') }}</option>
             </select>
         </div>
         <div>
-            <label class="block text-xs text-gray-500 mb-1">From</label>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.from') }}</label>
             <input type="date" id="date_from" class="border rounded px-3 py-2 text-sm">
         </div>
         <div>
-            <label class="block text-xs text-gray-500 mb-1">To</label>
+            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.to') }}</label>
             <input type="date" id="date_to" class="border rounded px-3 py-2 text-sm">
         </div>
-        <button type="submit" class="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">Load</button>
+        <button type="submit" class="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">{{ t('reports.load') }}</button>
     </form>
 </div>
 
 <div id="report-data" class="md-card overflow-hidden rounded-xl">
-    <p class="px-6 py-8 text-center text-slate-500">Select filters and click Load to view report</p>
+    <p class="px-6 py-8 text-center text-slate-500">{{ t('reports.hint') }}</p>
 </div>
 
 <script>
+    const RB = {
+        err: {{ t('reports.error_load')|tojson }},
+        empty: {{ t('reports.no_snapshots')|tojson }},
+        colDate: {{ t('reports.col_date')|tojson }},
+        colBalance: {{ t('reports.col_balance')|tojson }},
+        colContrib: {{ t('reports.col_contributions')|tojson }},
+        colDisb: {{ t('reports.col_disbursements')|tojson }},
+        colPay: {{ t('reports.col_payments')|tojson }},
+    };
     document.getElementById('report-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const params = new URLSearchParams({
@@ -54,20 +63,20 @@
         const container = document.getElementById('report-data');
 
         if (!res.ok) {
-            container.innerHTML = '<p class="px-6 py-8 text-center text-red-500">Error loading report</p>';
+            container.innerHTML = '<p class="px-6 py-8 text-center text-red-500">' + RB.err + '</p>';
             return;
         }
 
         const data = await res.json();
         if (!data.length) {
-            container.innerHTML = '<p class="px-6 py-8 text-center text-slate-500">No snapshots found for this period</p>';
+            container.innerHTML = '<p class="px-6 py-8 text-center text-slate-500">' + RB.empty + '</p>';
             return;
         }
 
         let html = '<table class="w-full text-sm"><thead class="bg-slate-50/80"><tr class="text-left text-slate-600">';
-        html += '<th class="px-6 py-3">Date</th><th class="px-6 py-3">Balance</th>';
-        html += '<th class="px-6 py-3">Contributions</th><th class="px-6 py-3">Loan Disbursements</th>';
-        html += '<th class="px-6 py-3">Loan Payments</th></tr></thead><tbody>';
+        html += '<th class="px-6 py-3">' + RB.colDate + '</th><th class="px-6 py-3">' + RB.colBalance + '</th>';
+        html += '<th class="px-6 py-3">' + RB.colContrib + '</th><th class="px-6 py-3">' + RB.colDisb + '</th>';
+        html += '<th class="px-6 py-3">' + RB.colPay + '</th></tr></thead><tbody>';
 
         data.forEach(s => {
             html += '<tr class="border-t border-slate-100">';

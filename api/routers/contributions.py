@@ -5,6 +5,7 @@ from ..auth import get_current_user, require_admin
 from ..models.user import User
 from ..models.contribution import ContributionCreate, BatchContributionCreate, BatchContributionItem
 from ..services import contribution_service, account_service, user_service
+from ..i18n import translate_html
 import json
 
 router = APIRouter()
@@ -153,9 +154,10 @@ async def create_batch_contributions_htmx(
             items.append(BatchContributionItem(account_id=account_id, amount=amount))
 
     if not items:
+        msg = translate_html(request, "contributions.batch_error")
         return HTMLResponse(
-            '<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">'
-            'No accounts selected or all amounts are zero.</div>'
+            f'<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">'
+            f"{msg}</div>"
         )
 
     batch_data = BatchContributionCreate(

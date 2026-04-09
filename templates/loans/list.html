@@ -1,19 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Loans - FONAFAHE{% endblock %}
+{% block title %}{{ t('meta.loans') }}{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-medium text-slate-900">Loans</h1>
+    <h1 class="text-2xl font-medium text-slate-900">{{ t('loans.title') }}</h1>
     <a href="/loans/request" class="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">
-        + Request Loan
+        {{ t('loans.request') }}
     </a>
 </div>
 
-<!-- Status filter -->
 <div class="flex flex-wrap gap-2 mb-6">
-    <a href="/loans" class="px-3 py-1.5 rounded-full text-sm font-medium {% if not filter_status %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">All</a>
+    <a href="/loans" class="px-3 py-1.5 rounded-full text-sm font-medium {% if not filter_status %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('loans.filter_all') }}</a>
     {% for s in ['requested', 'approved', 'active', 'paid', 'rejected', 'defaulted'] %}
-    <a href="/loans?status={{ s }}" class="px-3 py-1.5 rounded-full text-sm font-medium {% if filter_status == s %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ s|capitalize }}</a>
+    <a href="/loans?status={{ s }}" class="px-3 py-1.5 rounded-full text-sm font-medium {% if filter_status == s %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('loans.status_labels.' ~ s) }}</a>
     {% endfor %}
 </div>
 
@@ -21,11 +20,11 @@
     <table class="w-full text-sm">
         <thead class="bg-slate-50/80">
             <tr class="text-left text-slate-600">
-                <th class="px-6 py-3">Date</th>
-                <th class="px-6 py-3">Amount</th>
-                <th class="px-6 py-3">Backing</th>
-                <th class="px-6 py-3">Term</th>
-                <th class="px-6 py-3">Status</th>
+                <th class="px-6 py-3">{{ t('loans.date') }}</th>
+                <th class="px-6 py-3">{{ t('dashboard.amount') }}</th>
+                <th class="px-6 py-3">{{ t('loans.backing') }}</th>
+                <th class="px-6 py-3">{{ t('loans.term') }}</th>
+                <th class="px-6 py-3">{{ t('loans.status') }}</th>
                 <th class="px-6 py-3"></th>
             </tr>
         </thead>
@@ -39,10 +38,10 @@
                         {% if l.backing_type == 'individual' %}bg-primary-container text-primary-on-container
                         {% elif l.backing_type == 'group' %}bg-sky-100 text-sky-900
                         {% else %}bg-amber-100 text-amber-900{% endif %}">
-                        {{ l.backing_type }}
+                        {{ t('loans.backing_labels.' ~ l.backing_type) }}
                     </span>
                 </td>
-                <td class="px-6 py-3">{{ l.term_months }} months</td>
+                <td class="px-6 py-3">{{ l.term_months }} {{ t('loans.months') }}</td>
                 <td class="px-6 py-3">
                     <span class="px-2 py-1 rounded-full text-xs font-medium
                         {% if l.status == 'active' %}bg-emerald-100 text-emerald-800
@@ -51,17 +50,17 @@
                         {% elif l.status == 'rejected' %}bg-red-100 text-red-700
                         {% elif l.status == 'defaulted' %}bg-red-200 text-red-800
                         {% else %}bg-gray-100 text-gray-700{% endif %}">
-                        {{ l.status }}
+                        {{ t('loans.status_labels.' ~ l.status) }}
                     </span>
                 </td>
                 <td class="px-6 py-3">
-                    <a href="/loans/{{ l.id }}" class="text-primary font-medium hover:underline">Details</a>
+                    <a href="/loans/{{ l.id }}" class="text-primary font-medium hover:underline">{{ t('loans.details') }}</a>
                 </td>
             </tr>
             {% endfor %}
             {% if not loans %}
             <tr>
-                <td colspan="6" class="px-6 py-8 text-center text-slate-500">No loans found</td>
+                <td colspan="6" class="px-6 py-8 text-center text-slate-500">{{ t('loans.empty') }}</td>
             </tr>
             {% endif %}
         </tbody>

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}New Contribution - FONAFAHE{% endblock %}
+{% block title %}{{ t('contributions.record_new') }} - FONAFAHE{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <a href="/contributions" class="text-sm font-medium text-primary hover:underline">&larr; Back to contributions</a>
-    <h1 class="text-2xl font-medium text-slate-900 mt-2">Record New Contribution</h1>
+    <a href="/contributions" class="text-sm font-medium text-primary hover:underline">&larr; {{ t('contributions.back') }}</a>
+    <h1 class="text-2xl font-medium text-slate-900 mt-2">{{ t('contributions.record_new') }}</h1>
     {% if is_admin %}
     <p class="text-sm text-slate-600 mt-1">
-        Recording for a single account.
-        <a href="/contributions/batch" class="font-medium text-primary hover:underline">Use Batch Mode</a> to record for multiple members at once.
+        {{ t('contributions.single_hint') }}
+        <a href="/contributions/batch" class="font-medium text-primary hover:underline">{{ t('contributions.batch_link') }}</a> {{ t('contributions.batch_hint') }}
     </p>
     {% endif %}
 </div>
@@ -18,68 +18,68 @@
         <div class="space-y-4">
             {% if is_admin %}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Account</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
                 <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
-                    <option value="">Select account...</option>
+                    <option value="">{{ t('contributions.select_account') }}</option>
                     {% for a in accounts %}
-                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} (Balance: ${{ "%.2f"|format(a.balance) }})</option>
+                    <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount="%.2f"|format(a.balance)) }})</option>
                     {% endfor %}
                 </select>
             </div>
             {% else %}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Account</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
                 <span class="block text-gray-600 bg-gray-50 px-3 py-2 rounded-md border border-gray-200 text-sm">
-                    {{ account.owner_name or account.account_number }} (Balance: ${{ "%.2f"|format(account.balance) }})
+                    {{ account.owner_name or account.account_number }} ({{ t('contributions.balance_label', amount="%.2f"|format(account.balance)) }})
                 </span>
                 <input type="hidden" name="account_id" value="{{ account.id }}">
             </div>
             {% endif %}
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.amount') }}</label>
                 <input type="number" name="amount" step="0.01" min="0.01" required
                     value="{{ default_amount or '' }}"
                     class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.type') }}</label>
                 <select name="contribution_type" class="w-full border rounded-lg px-3 py-2 text-sm">
-                    <option value="regular">Regular</option>
-                    <option value="extraordinary">Extraordinary</option>
-                    <option value="initial">Initial</option>
+                    <option value="regular">{{ t('contributions.types.regular') }}</option>
+                    <option value="extraordinary">{{ t('contributions.types.extraordinary') }}</option>
+                    <option value="initial">{{ t('contributions.types.initial') }}</option>
                 </select>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.year') }}</label>
                     <input type="number" name="period_year" value="2026" required
                         class="w-full border rounded-lg px-3 py-2 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.month_label') }}</label>
                     <input type="number" name="period_month" min="1" max="12" required
                         class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1-12">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.description') }}</label>
                 <input type="text" name="description" class="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="Monthly contribution">
+                    placeholder="{{ t('contributions.monthly_placeholder') }}">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Reference</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.receipt_ref') }}</label>
                 <input type="text" name="receipt_reference" class="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="Optional">
+                    placeholder="{{ t('contributions.optional') }}">
             </div>
 
             <button type="submit"
                 class="w-full rounded-full bg-primary py-3 text-sm font-medium text-white shadow-md2 hover:bg-primary-dark transition">
-                Record Contribution
+                {{ t('contributions.record') }}
             </button>
         </div>
     </form>

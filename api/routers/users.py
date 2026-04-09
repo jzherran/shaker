@@ -4,6 +4,7 @@ from ..dependencies import templates, get_db
 from ..auth import require_admin
 from ..models.user import User
 from ..services import user_service
+from ..i18n import translate_html
 
 router = APIRouter()
 
@@ -21,26 +22,32 @@ async def merge_requests_page(request: Request, admin: User = Depends(require_ad
 
 @router.post("/api/merge-requests/{request_id}/approve")
 async def approve_merge_request(
-    request_id: str, admin: User = Depends(require_admin)
+    request: Request,
+    request_id: str,
+    admin: User = Depends(require_admin),
 ):
     db = get_db()
     try:
         await user_service.approve_merge(db, request_id, admin.id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    msg = translate_html(request, "admin.merge_approved")
     return HTMLResponse(
-        '<tr class="border-t bg-green-50"><td colspan="5" class="px-6 py-3 text-green-700 text-center">'
-        'Merge approved successfully.</td></tr>'
+        f'<tr class="border-t bg-green-50"><td colspan="5" class="px-6 py-3 text-green-700 text-center">'
+        f"{msg}</td></tr>"
     )
 
 
 @router.post("/api/merge-requests/{request_id}/reject")
 async def reject_merge_request(
-    request_id: str, admin: User = Depends(require_admin)
+    request: Request,
+    request_id: str,
+    admin: User = Depends(require_admin),
 ):
     db = get_db()
     await user_service.reject_merge(db, request_id, admin.id)
+    msg = translate_html(request, "admin.merge_rejected")
     return HTMLResponse(
-        '<tr class="border-t bg-red-50"><td colspan="5" class="px-6 py-3 text-red-700 text-center">'
-        'Merge rejected.</td></tr>'
+        f'<tr class="border-t bg-red-50"><td colspan="5" class="px-6 py-3 text-red-700 text-center">'
+        f"{msg}</td></tr>"
     )

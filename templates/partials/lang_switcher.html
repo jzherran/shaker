@@ -1,0 +1,14 @@
+{% set _next = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') %}
+<div class="flex flex-wrap justify-center items-center gap-3 mt-4 pt-4 border-t border-slate-200/80">
+    <span class="text-slate-500 text-xs">{{ t('footer.language') }}</span>
+    <a href="/set-language?lang=en&amp;next={{ _next|next_q }}"
+       class="inline-flex items-center justify-center rounded-full p-2 hover:bg-slate-100 transition ring-1 ring-transparent hover:ring-slate-200 {% if request.state.locale == 'en' %}bg-slate-100 ring-slate-300{% endif %}"
+       title="{{ t('lang.en') }}" aria-label="{{ t('lang.en') }}">
+        <span class="text-xl leading-none" role="img" aria-hidden="true">🇺🇸</span>
+    </a>
+    <a href="/set-language?lang=es&amp;next={{ _next|next_q }}"
+       class="inline-flex items-center justify-center rounded-full p-2 hover:bg-slate-100 transition ring-1 ring-transparent hover:ring-slate-200 {% if request.state.locale == 'es' %}bg-slate-100 ring-slate-300{% endif %}"
+       title="{{ t('lang.es') }}" aria-label="{{ t('lang.es') }}">
+        <span class="text-xl leading-none" role="img" aria-hidden="true">🇪🇸</span>
+    </a>
+</div>

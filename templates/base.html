@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.state.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0D47A1">
-    <title>{% block title %}Shaker - FONAFAHE{% endblock %}</title>
+    <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -43,33 +43,33 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14 md:h-16">
                 <div class="flex items-center space-x-8">
-                    <a href="/dashboard" class="text-xl font-medium tracking-tight">FONAFAHE</a>
+                    <a href="/dashboard" class="text-xl font-medium tracking-tight">{{ t('nav.brand') }}</a>
                     <div class="hidden md:flex space-x-1">
-                        <a href="/dashboard" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Dashboard</a>
-                        <a href="/accounts" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Accounts</a>
-                        <a href="/contributions" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Contributions</a>
-                        <a href="/loans" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Loans</a>
-                        <a href="/reports/balance" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Reports</a>
+                        <a href="/dashboard" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.dashboard') }}</a>
+                        <a href="/accounts" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.accounts') }}</a>
+                        <a href="/contributions" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.contributions') }}</a>
+                        <a href="/loans" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.loans') }}</a>
+                        <a href="/reports/balance" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.reports') }}</a>
                         {% if is_admin %}
-                        <a href="/reports/fund" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Fund</a>
-                        <a href="/admin/merge-requests" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Merges</a>
+                        <a href="/reports/fund" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.fund') }}</a>
+                        <a href="/admin/merge-requests" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.merges') }}</a>
                         {% endif %}
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="/profile" class="text-sm font-medium opacity-95 hover:underline">{{ user.full_name }}</a>
                     {% if is_admin %}
-                    <span class="bg-amber-400 text-primary-dark text-xs font-medium px-2 py-1 rounded-full">Admin</span>
+                    <span class="bg-amber-400 text-primary-dark text-xs font-medium px-2 py-1 rounded-full">{{ t('nav.admin') }}</span>
                     {% endif %}
-                    <a href="/auth/logout" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Logout</a>
+                    <a href="/auth/logout" class="nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.logout') }}</a>
                 </div>
             </div>
         </div>
         <div class="md:hidden px-4 pb-3 space-y-1 border-t border-white/10">
-            <a href="/dashboard" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Dashboard</a>
-            <a href="/contributions" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Contributions</a>
-            <a href="/loans" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Loans</a>
-            <a href="/reports/balance" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">Reports</a>
+            <a href="/dashboard" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.dashboard') }}</a>
+            <a href="/contributions" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.contributions') }}</a>
+            <a href="/loans" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.loans') }}</a>
+            <a href="/reports/balance" class="block nav-link-m3 px-3 py-2 rounded-full text-sm font-medium">{{ t('nav.reports') }}</a>
         </div>
     </nav>
     {% endif %}
@@ -91,7 +91,8 @@
     </main>
 
     <footer class="text-center text-slate-500 text-sm py-8 border-t border-slate-200/80">
-        Shaker - FONAFAHE &copy; 2026
+        <p>{{ t('footer.copyright') }}</p>
+        {% include "partials/lang_switcher.html" %}
     </footer>
     <script src="/static/js/cop-default-contrib.js" defer></script>
 </body>

@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Accounts - FONAFAHE{% endblock %}
+{% block title %}{{ t('meta.accounts') }}{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-medium text-slate-900">Accounts</h1>
+    <h1 class="text-2xl font-medium text-slate-900">{{ t('accounts.title') }}</h1>
 </div>
 
 <div class="md-card overflow-hidden rounded-xl">
     <table class="w-full text-sm">
         <thead class="bg-slate-50/80">
             <tr class="text-left text-slate-600">
-                <th class="px-6 py-3">Member</th>
-                <th class="px-6 py-3">Balance</th>
-                <th class="px-6 py-3">Status</th>
-                <th class="px-6 py-3">Created</th>
+                <th class="px-6 py-3">{{ t('accounts.member') }}</th>
+                <th class="px-6 py-3">{{ t('accounts.balance') }}</th>
+                <th class="px-6 py-3">{{ t('accounts.status') }}</th>
+                <th class="px-6 py-3">{{ t('accounts.created') }}</th>
                 <th class="px-6 py-3"></th>
             </tr>
         </thead>
@@ -27,18 +27,18 @@
                         {% if a.status == 'active' %}bg-emerald-100 text-emerald-800
                         {% elif a.status == 'suspended' %}bg-red-100 text-red-700
                         {% else %}bg-gray-100 text-gray-700{% endif %}">
-                        {{ a.status }}
+                        {{ t('account_status.' ~ a.status) }}
                     </span>
                 </td>
                 <td class="px-6 py-4 text-gray-500">{{ a.created_at[:10] if a.created_at is string else a.created_at.strftime('%Y-%m-%d') }}</td>
                 <td class="px-6 py-4">
-                    <a href="/accounts/{{ a.id }}" class="font-medium text-primary hover:underline">View</a>
+                    <a href="/accounts/{{ a.id }}" class="font-medium text-primary hover:underline">{{ t('accounts.view') }}</a>
                 </td>
             </tr>
             {% endfor %}
             {% if not accounts %}
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No accounts found</td>
+                <td colspan="5" class="px-6 py-8 text-center text-slate-500">{{ t('accounts.empty') }}</td>
             </tr>
             {% endif %}
         </tbody>

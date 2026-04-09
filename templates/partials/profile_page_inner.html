@@ -1,9 +1,9 @@
 <div id="profile-page" class="max-w-lg mx-auto">
-    <h1 class="text-2xl font-medium text-slate-900 mb-6">My Profile</h1>
+    <h1 class="text-2xl font-medium text-slate-900 mb-6">{{ t('profile.title') }}</h1>
 
     {% if success %}
     <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-md1">
-        Profile updated successfully.
+        {{ t('profile.success') }}
     </div>
     {% endif %}
 
@@ -11,57 +11,57 @@
         <form hx-post="/api/profile/htmx" hx-target="#profile-page" hx-swap="outerHTML">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Full Name</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">{{ t('profile.full_name') }}</label>
                     <input type="text" name="full_name" value="{{ user.full_name }}" required
                            class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary/30">
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">{{ t('profile.email') }}</label>
                     <span class="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
                         {{ user.email }}
                     </span>
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Phone</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">{{ t('profile.phone') }}</label>
                     <input type="text" name="phone" value="{{ user.phone or '' }}"
-                           placeholder="Optional"
+                           placeholder="{{ t('contributions.optional') }}"
                            class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary/30">
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">National ID</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">{{ t('profile.national_id') }}</label>
                     <span class="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
-                        {{ user.national_id or 'Not set' }}
+                        {{ user.national_id or t('profile.not_set') }}
                     </span>
                 </div>
 
                 <div data-cop-default-contrib>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Default contribution amount (COP)</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">{{ t('profile.default_amount') }}</label>
                     <input type="hidden" name="default_contribution_amount"
                            value="{% if user.default_contribution_amount is not none %}{{ user.default_contribution_amount }}{% endif %}">
                     <input type="text"
                            class="js-cop-default-visible w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary/30"
                            autocomplete="off"
                            inputmode="decimal"
-                           placeholder="Ej. $ 200.000"
-                           aria-label="Default contribution amount in Colombian pesos">
+                           placeholder="{{ t('profile.placeholder_cop') }}"
+                           aria-label="{{ t('profile.aria_cop') }}">
                     <p class="mt-1 text-xs text-slate-500">
-                        Shown in Colombian pesos (COP). Pre-filled when you record a contribution.
+                        {{ t('profile.default_amount_help') }}
                     </p>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <label class="block text-sm font-medium text-slate-700">Role</label>
+                    <label class="block text-sm font-medium text-slate-700">{{ t('profile.role') }}</label>
                     <span class="rounded-full px-2.5 py-1 text-xs font-medium
                         {% if user.role == 'admin' %}bg-amber-100 text-amber-900{% else %}bg-primary-container text-primary-on-container{% endif %}">
-                        {{ user.role }}
+                        {{ t('profile.roles.' ~ user.role) }}
                     </span>
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Member Since</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">{{ t('profile.member_since') }}</label>
                     <span class="text-slate-600">
                         {{ user.created_at[:10] if user.created_at is string else user.created_at.strftime('%Y-%m-%d') }}
                     </span>
@@ -71,7 +71,7 @@
             <div class="mt-6">
                 <button type="submit"
                         class="w-full rounded-full bg-primary py-2.5 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark">
-                    Save Changes
+                    {{ t('profile.save') }}
                 </button>
             </div>
         </form>

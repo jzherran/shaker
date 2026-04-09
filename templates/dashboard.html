@@ -1,17 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - FONAFAHE{% endblock %}
+{% block title %}{{ t('meta.dashboard') }}{% endblock %}
 
 {% block content %}
 <div class="mb-8">
-    <h1 class="text-2xl font-medium text-slate-900 tracking-tight">Welcome, {{ user.full_name }}</h1>
-    <p class="text-slate-600 mt-1">Your financial overview</p>
+    <h1 class="text-2xl font-medium text-slate-900 tracking-tight">{{ t('dashboard.welcome', name=user.full_name) }}</h1>
+    <p class="text-slate-600 mt-1">{{ t('dashboard.subtitle') }}</p>
 </div>
 
-<!-- Balance Cards -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     {% if account %}
     <div class="md-card p-6">
-        <p class="text-sm text-slate-600 font-medium">Your Balance</p>
+        <p class="text-sm text-slate-600 font-medium">{{ t('dashboard.your_balance') }}</p>
         <p class="text-3xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(account.balance) }}</p>
         <p class="text-xs text-slate-500 mt-2">{{ account.owner_name }}</p>
     </div>
@@ -19,46 +18,44 @@
 
     {% if fund %}
     <div class="md-card p-6">
-        <p class="text-sm text-slate-600 font-medium">Collective Fund</p>
+        <p class="text-sm text-slate-600 font-medium">{{ t('dashboard.collective_fund') }}</p>
         <p class="text-3xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(fund.total_balance) }}</p>
-        <p class="text-xs text-slate-500 mt-2">{{ fund.total_members }} members</p>
+        <p class="text-xs text-slate-500 mt-2">{{ fund.total_members }} {{ t('dashboard.members') }}</p>
     </div>
     <div class="md-card p-6">
-        <p class="text-sm text-slate-600 font-medium">Available for Lending</p>
+        <p class="text-sm text-slate-600 font-medium">{{ t('dashboard.available_lending') }}</p>
         <p class="text-3xl font-medium text-primary mt-1">${{ "%.2f"|format(fund.available_for_lending) }}</p>
-        <p class="text-xs text-slate-500 mt-2">Active loans: ${{ "%.2f"|format(fund.total_active_loans) }}</p>
+        <p class="text-xs text-slate-500 mt-2">{{ t('dashboard.active_loans_prefix') }} ${{ "%.2f"|format(fund.total_active_loans) }}</p>
     </div>
     {% endif %}
 </div>
 
-<!-- Quick Actions -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     {% if is_admin %}
     <a href="/contributions/new" class="block rounded-xl bg-primary p-6 text-center text-white shadow-md2 transition hover:bg-primary-dark hover:shadow-md3">
-        <p class="text-lg font-medium">Record Contribution</p>
-        <p class="text-sm opacity-90 mt-1">Add a new member contribution</p>
+        <p class="text-lg font-medium">{{ t('dashboard.record_contribution') }}</p>
+        <p class="text-sm opacity-90 mt-1">{{ t('dashboard.record_contribution_sub') }}</p>
     </a>
     {% endif %}
     <a href="/loans/request" class="block rounded-xl border-2 border-primary bg-primary-container p-6 text-center text-primary-on-container shadow-md1 transition hover:bg-sky-100/80">
-        <p class="text-lg font-medium">Request Loan</p>
-        <p class="text-sm opacity-90 mt-1">Apply for a new loan</p>
+        <p class="text-lg font-medium">{{ t('dashboard.request_loan') }}</p>
+        <p class="text-sm opacity-90 mt-1">{{ t('dashboard.request_loan_sub') }}</p>
     </a>
 </div>
 
-<!-- Recent Contributions -->
 {% if recent_contributions %}
 <div class="md-card p-6">
     <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-medium text-slate-900">Recent Contributions</h2>
-        <a href="/contributions" class="text-primary text-sm font-medium hover:underline">View all</a>
+        <h2 class="text-lg font-medium text-slate-900">{{ t('dashboard.recent_contributions') }}</h2>
+        <a href="/contributions" class="text-primary text-sm font-medium hover:underline">{{ t('dashboard.view_all') }}</a>
     </div>
     <table class="w-full text-sm">
         <thead>
             <tr class="text-left text-slate-600 border-b border-slate-200">
-                <th class="pb-2 font-medium">Date</th>
-                <th class="pb-2 font-medium">Type</th>
-                <th class="pb-2 font-medium">Period</th>
-                <th class="pb-2 text-right font-medium">Amount</th>
+                <th class="pb-2 font-medium">{{ t('dashboard.date') }}</th>
+                <th class="pb-2 font-medium">{{ t('dashboard.type') }}</th>
+                <th class="pb-2 font-medium">{{ t('dashboard.period') }}</th>
+                <th class="pb-2 text-right font-medium">{{ t('dashboard.amount') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -70,7 +67,7 @@
                         {% if c.contribution_type == 'regular' %}bg-primary-container text-primary-on-container
                         {% elif c.contribution_type == 'extraordinary' %}bg-sky-100 text-sky-900
                         {% else %}bg-slate-100 text-slate-700{% endif %}">
-                        {{ c.contribution_type }}
+                        {{ t('contributions.types.' ~ c.contribution_type) }}
                     </span>
                 </td>
                 <td class="py-3">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>

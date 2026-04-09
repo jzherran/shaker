@@ -1,25 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Merge Requests - FONAFAHE{% endblock %}
+{% block title %}{{ t('meta.merge_requests') }}{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-medium text-slate-900">Identity Merge Requests</h1>
+    <h1 class="text-2xl font-medium text-slate-900">{{ t('admin.merge_title') }}</h1>
 </div>
 
 {% if not merge_requests %}
 <div class="md-card rounded-xl p-8 text-center text-slate-500">
-    No pending merge requests.
+    {{ t('admin.empty') }}
 </div>
 {% else %}
 <div class="md-card overflow-hidden rounded-xl">
     <table class="w-full text-sm">
         <thead class="bg-slate-50/80">
             <tr class="text-left text-slate-600">
-                <th class="px-6 py-3">Requesting User</th>
-                <th class="px-6 py-3">Target User</th>
-                <th class="px-6 py-3">National ID</th>
-                <th class="px-6 py-3">Requested</th>
-                <th class="px-6 py-3">Actions</th>
+                <th class="px-6 py-3">{{ t('admin.requesting') }}</th>
+                <th class="px-6 py-3">{{ t('admin.target') }}</th>
+                <th class="px-6 py-3">{{ t('admin.national_id') }}</th>
+                <th class="px-6 py-3">{{ t('admin.requested') }}</th>
+                <th class="px-6 py-3">{{ t('admin.actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -39,18 +39,18 @@
                 </td>
                 <td class="px-6 py-3 space-x-2">
                     <button hx-post="/api/merge-requests/{{ mr.id }}/approve"
-                            hx-confirm="Approve this merge? The requesting user's account will be merged into the target user."
+                            hx-confirm="{{ t('admin.confirm_approve') }}"
                             hx-target="#merge-{{ mr.id }}"
                             hx-swap="outerHTML"
                             class="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-dark">
-                        Approve
+                        {{ t('admin.approve') }}
                     </button>
                     <button hx-post="/api/merge-requests/{{ mr.id }}/reject"
-                            hx-confirm="Reject this merge request?"
+                            hx-confirm="{{ t('admin.confirm_reject') }}"
                             hx-target="#merge-{{ mr.id }}"
                             hx-swap="outerHTML"
                             class="rounded-full bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700">
-                        Reject
+                        {{ t('admin.reject') }}
                     </button>
                 </td>
             </tr>

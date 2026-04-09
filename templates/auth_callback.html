@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.state.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0D47A1">
-    <title>Authenticating...</title>
+    <title>{{ t('meta.auth') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -19,12 +19,24 @@
         };
     </script>
 </head>
-<body class="min-h-screen bg-[#F5F9FC] font-sans antialiased flex items-center justify-center">
+<body class="min-h-screen bg-[#F5F9FC] font-sans antialiased flex flex-col">
+    <div class="flex flex-1 items-center justify-center px-4">
     <div class="text-center px-4">
-        <p id="status" class="text-lg font-medium text-slate-700">Signing you in...</p>
+        <p id="status" class="text-lg font-medium text-slate-700">{{ t('auth_callback.signing_in') }}</p>
     </div>
+    </div>
+    <footer class="py-6 text-center text-slate-500 text-sm border-t border-slate-200/80">
+        <p>{{ t('footer.copyright') }}</p>
+        {% include "partials/lang_switcher.html" %}
+    </footer>
 
     <script>
+        const AUTH = {
+            signingIn: {{ t('auth_callback.signing_in')|tojson }},
+            noToken: {{ t('auth_callback.no_token')|tojson }},
+            loginFailed: {{ t('auth_callback.login_failed')|tojson }},
+            errPrefix: {{ t('auth_callback.error_prefix')|tojson }},
+        };
         (async () => {
             const statusEl = document.getElementById('status');
 
@@ -33,7 +45,7 @@
                 const accessToken = hashParams.get('access_token');
 
                 if (!accessToken) {
-                    statusEl.textContent = 'No authentication token found. Redirecting...';
+                    statusEl.textContent = AUTH.noToken;
                     setTimeout(() => { window.location.href = '/login'; }, 1500);
                     return;
                 }
@@ -62,12 +74,12 @@
                     window.location.href = '/dashboard';
                 } else {
                     const err = await res.json().catch(() => ({}));
-                    statusEl.textContent = 'Login failed: ' + (err.detail || 'Unknown error');
+                    statusEl.textContent = AUTH.loginFailed + (err.detail || 'Unknown error');
                     statusEl.className = 'text-lg font-medium text-red-600';
                     setTimeout(() => { window.location.href = '/login'; }, 3000);
                 }
             } catch (e) {
-                statusEl.textContent = 'Error: ' + e.message;
+                statusEl.textContent = AUTH.errPrefix + e.message;
                 statusEl.className = 'text-lg font-medium text-red-600';
                 setTimeout(() => { window.location.href = '/login'; }, 3000);
             }

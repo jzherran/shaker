@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.requests import Request
 from dotenv import load_dotenv
 import os
 
@@ -19,6 +20,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def locale_middleware(request: Request, call_next):
+    lang = request.cookies.get("lang", "en")
+    if lang not in ("en", "es"):
+        lang = "en"
+    request.state.locale = lang
+    return await call_next(request)
+
 
 # Mount static files (only works locally; Vercel serves static via routes config)
 static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")

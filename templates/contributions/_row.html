@@ -5,7 +5,7 @@
             {% if c.contribution_type == 'regular' %}bg-primary-container text-primary-on-container
             {% elif c.contribution_type == 'extraordinary' %}bg-sky-100 text-sky-900
             {% else %}bg-slate-100 text-slate-700{% endif %}">
-            {{ c.contribution_type }}
+            {{ t('contributions.types.' ~ c.contribution_type) }}
         </span>
     </td>
     <td class="px-6 py-3">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
@@ -14,11 +14,11 @@
     {% if is_admin is defined and is_admin %}
     <td class="px-6 py-3">
         <button hx-delete="/api/contributions/{{ c.id }}"
-                hx-confirm="Cancel this contribution?"
+                hx-confirm="{{ t('contributions.confirm_cancel') }}"
                 hx-target="closest tr"
                 hx-swap="outerHTML"
                 class="text-xs text-red-600 hover:text-red-800 hover:underline">
-            Cancel
+            {{ t('contributions.cancel') }}
         </button>
     </td>
     {% endif %}

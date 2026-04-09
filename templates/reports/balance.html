@@ -2,9 +2,9 @@
 {% block title %}Balance Reports - FONAFAHE{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold text-gray-800 mb-6">Balance Reports</h1>
+<h1 class="text-2xl font-medium text-slate-900 mb-6">Balance Reports</h1>
 
-<div class="bg-white rounded-xl shadow p-6 mb-6">
+<div class="md-card p-6 mb-6 rounded-xl">
     <form id="report-form" class="flex flex-wrap gap-4 items-end">
         <div>
             <label class="block text-xs text-gray-500 mb-1">Account</label>
@@ -30,12 +30,12 @@
             <label class="block text-xs text-gray-500 mb-1">To</label>
             <input type="date" id="date_to" class="border rounded px-3 py-2 text-sm">
         </div>
-        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">Load</button>
+        <button type="submit" class="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">Load</button>
     </form>
 </div>
 
-<div id="report-data" class="bg-white rounded-xl shadow overflow-hidden">
-    <p class="px-6 py-8 text-center text-gray-400">Select filters and click Load to view report</p>
+<div id="report-data" class="md-card overflow-hidden rounded-xl">
+    <p class="px-6 py-8 text-center text-slate-500">Select filters and click Load to view report</p>
 </div>
 
 <script>
@@ -60,22 +60,22 @@
 
         const data = await res.json();
         if (!data.length) {
-            container.innerHTML = '<p class="px-6 py-8 text-center text-gray-400">No snapshots found for this period</p>';
+            container.innerHTML = '<p class="px-6 py-8 text-center text-slate-500">No snapshots found for this period</p>';
             return;
         }
 
-        let html = '<table class="w-full text-sm"><thead class="bg-gray-50"><tr class="text-left text-gray-500">';
+        let html = '<table class="w-full text-sm"><thead class="bg-slate-50/80"><tr class="text-left text-slate-600">';
         html += '<th class="px-6 py-3">Date</th><th class="px-6 py-3">Balance</th>';
         html += '<th class="px-6 py-3">Contributions</th><th class="px-6 py-3">Loan Disbursements</th>';
         html += '<th class="px-6 py-3">Loan Payments</th></tr></thead><tbody>';
 
         data.forEach(s => {
-            html += '<tr class="border-t">';
+            html += '<tr class="border-t border-slate-100">';
             html += '<td class="px-6 py-3">' + s.snapshot_date + '</td>';
-            html += '<td class="px-6 py-3 font-semibold text-indigo-700">$' + s.balance.toFixed(2) + '</td>';
-            html += '<td class="px-6 py-3 text-green-600">$' + s.total_contributions.toFixed(2) + '</td>';
-            html += '<td class="px-6 py-3 text-orange-600">$' + s.total_loan_disbursements.toFixed(2) + '</td>';
-            html += '<td class="px-6 py-3 text-blue-600">$' + s.total_loan_payments.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-3 font-medium text-primary-dark">$' + s.balance.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-3 text-primary">$' + s.total_contributions.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-3 text-amber-700">$' + s.total_loan_disbursements.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-3 text-sky-700">$' + s.total_loan_payments.toFixed(2) + '</td>';
             html += '</tr>';
         });
 

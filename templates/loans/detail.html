@@ -3,59 +3,59 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="/loans" class="text-indigo-600 hover:underline text-sm">&larr; Back to loans</a>
-    <h1 class="text-2xl font-bold text-gray-800 mt-2">Loan Details</h1>
+    <a href="/loans" class="text-sm font-medium text-primary hover:underline">&larr; Back to loans</a>
+    <h1 class="text-2xl font-medium text-slate-900 mt-2">Loan Details</h1>
 </div>
 
 <!-- Loan Summary -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white rounded-xl shadow p-5">
-        <p class="text-sm text-gray-500">Requested</p>
-        <p class="text-2xl font-bold">${{ "%.2f"|format(loan.amount_requested) }}</p>
+    <div class="md-card p-5 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Requested</p>
+        <p class="text-2xl font-medium text-slate-900 mt-1">${{ "%.2f"|format(loan.amount_requested) }}</p>
     </div>
-    <div class="bg-white rounded-xl shadow p-5">
-        <p class="text-sm text-gray-500">Approved</p>
-        <p class="text-2xl font-bold text-green-600">${{ "%.2f"|format(loan.amount_approved) if loan.amount_approved else '-' }}</p>
+    <div class="md-card p-5 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Approved</p>
+        <p class="text-2xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(loan.amount_approved) if loan.amount_approved else '-' }}</p>
     </div>
-    <div class="bg-white rounded-xl shadow p-5">
-        <p class="text-sm text-gray-500">Status</p>
-        <p class="text-xl font-bold
-            {% if loan.status == 'active' %}text-green-600
+    <div class="md-card p-5 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Status</p>
+        <p class="text-xl font-medium mt-1
+            {% if loan.status == 'active' %}text-emerald-700
             {% elif loan.status == 'rejected' %}text-red-600
-            {% elif loan.status == 'paid' %}text-blue-600
-            {% else %}text-yellow-600{% endif %}">
+            {% elif loan.status == 'paid' %}text-primary
+            {% else %}text-amber-700{% endif %}">
             {{ loan.status|upper }}
         </p>
     </div>
-    <div class="bg-white rounded-xl shadow p-5">
-        <p class="text-sm text-gray-500">Backing</p>
-        <p class="text-xl font-bold text-indigo-600">{{ loan.backing_type|capitalize }}</p>
+    <div class="md-card p-5 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Backing</p>
+        <p class="text-xl font-medium text-primary mt-1">{{ loan.backing_type|capitalize }}</p>
     </div>
 </div>
 
 <!-- Loan Info -->
-<div class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Loan Information</h2>
+<div class="md-card p-6 mb-6 rounded-xl">
+    <h2 class="text-lg font-medium text-slate-900 mb-3">Loan Information</h2>
     <dl class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
         <div>
-            <dt class="text-gray-500">Interest Rate</dt>
+            <dt class="text-slate-600">Interest Rate</dt>
             <dd class="font-medium">{{ "%.2f"|format(loan.interest_rate * 100) }}%</dd>
         </div>
         <div>
-            <dt class="text-gray-500">Term</dt>
+            <dt class="text-slate-600">Term</dt>
             <dd class="font-medium">{{ loan.term_months }} months</dd>
         </div>
         <div>
-            <dt class="text-gray-500">Due Date</dt>
+            <dt class="text-slate-600">Due Date</dt>
             <dd class="font-medium">{{ loan.due_date or '-' }}</dd>
         </div>
         <div>
-            <dt class="text-gray-500">Purpose</dt>
+            <dt class="text-slate-600">Purpose</dt>
             <dd>{{ loan.purpose or '-' }}</dd>
         </div>
         {% if loan.rejection_reason %}
         <div class="col-span-2">
-            <dt class="text-gray-500">Rejection Reason</dt>
+            <dt class="text-slate-600">Rejection Reason</dt>
             <dd class="text-red-600">{{ loan.rejection_reason }}</dd>
         </div>
         {% endif %}
@@ -64,13 +64,13 @@
 
 <!-- Admin Actions -->
 {% if is_admin and loan.status == 'requested' %}
-<div class="bg-yellow-50 rounded-xl shadow p-6 mb-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Admin Actions</h2>
-    <div class="flex gap-3">
-        <button onclick="approveLoan()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
+<div class="rounded-xl border border-amber-200 bg-amber-50/80 p-6 mb-6 shadow-md1">
+    <h2 class="text-lg font-medium text-slate-900 mb-3">Admin Actions</h2>
+    <div class="flex flex-wrap gap-3">
+        <button onclick="approveLoan()" class="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark">
             Approve
         </button>
-        <button onclick="rejectLoan()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">
+        <button onclick="rejectLoan()" class="rounded-full bg-red-600 px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-red-700">
             Reject
         </button>
     </div>
@@ -79,8 +79,8 @@
 {% endif %}
 
 {% if is_admin and loan.status == 'approved' %}
-<div class="bg-blue-50 rounded-xl shadow p-6 mb-6">
-    <button onclick="disburseLoan()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+<div class="rounded-xl bg-primary-container/60 p-6 mb-6 shadow-md1">
+    <button onclick="disburseLoan()" class="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark">
         Mark as Disbursed
     </button>
     <div id="admin-result" class="mt-3"></div>
@@ -89,11 +89,11 @@
 
 <!-- Guarantors -->
 {% if guarantors %}
-<div class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Guarantors</h2>
+<div class="md-card p-6 mb-6 rounded-xl">
+    <h2 class="text-lg font-medium text-slate-900 mb-3">Guarantors</h2>
     <table class="w-full text-sm">
         <thead>
-            <tr class="text-left text-gray-500 border-b">
+            <tr class="text-left text-slate-600 border-b border-slate-200">
                 <th class="pb-2">Guarantor</th>
                 <th class="pb-2">Amount</th>
                 <th class="pb-2">Status</th>
@@ -105,10 +105,10 @@
                 <td class="py-2">{{ g.accounts.users.full_name if g.accounts and g.accounts.users else (g.accounts.account_number if g.accounts else g.guarantor_account_id) }}</td>
                 <td class="py-2">${{ "%.2f"|format(g.guaranteed_amount) }}</td>
                 <td class="py-2">
-                    <span class="px-2 py-1 rounded text-xs
-                        {% if g.status == 'accepted' %}bg-green-100 text-green-700
-                        {% elif g.status == 'rejected' %}bg-red-100 text-red-700
-                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                        {% if g.status == 'accepted' %}bg-emerald-100 text-emerald-800
+                        {% elif g.status == 'rejected' %}bg-red-100 text-red-800
+                        {% else %}bg-amber-100 text-amber-900{% endif %}">
                         {{ g.status }}
                     </span>
                 </td>
@@ -121,12 +121,12 @@
 
 <!-- Amortization Schedule -->
 {% if schedule %}
-<div class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Amortization Schedule</h2>
+<div class="md-card p-6 mb-6 rounded-xl">
+    <h2 class="text-lg font-medium text-slate-900 mb-3">Amortization Schedule</h2>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
-                <tr class="text-left text-gray-500 border-b">
+                <tr class="text-left text-slate-600 border-b border-slate-200">
                     <th class="pb-2">#</th>
                     <th class="pb-2">Payment</th>
                     <th class="pb-2">Principal</th>
@@ -152,11 +152,11 @@
 
 <!-- Payments -->
 {% if payments %}
-<div class="bg-white rounded-xl shadow p-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Payments Made</h2>
+<div class="md-card p-6 rounded-xl">
+    <h2 class="text-lg font-medium text-slate-900 mb-3">Payments Made</h2>
     <table class="w-full text-sm">
         <thead>
-            <tr class="text-left text-gray-500 border-b">
+            <tr class="text-left text-slate-600 border-b border-slate-200">
                 <th class="pb-2">#</th>
                 <th class="pb-2">Date</th>
                 <th class="pb-2">Amount</th>
@@ -169,7 +169,7 @@
             <tr class="border-b last:border-0">
                 <td class="py-2">{{ p.payment_number }}</td>
                 <td class="py-2">{{ p.created_at[:10] }}</td>
-                <td class="py-2 font-semibold">${{ "%.2f"|format(p.amount) }}</td>
+                <td class="py-2 font-medium text-primary-dark">${{ "%.2f"|format(p.amount) }}</td>
                 <td class="py-2">${{ "%.2f"|format(p.principal_amount) }}</td>
                 <td class="py-2">${{ "%.2f"|format(p.interest_amount) }}</td>
             </tr>

@@ -2,41 +2,41 @@
 {% block title %}Collective Fund - FONAFAHE{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold text-gray-800 mb-6">Collective Fund Overview</h1>
+<h1 class="text-2xl font-medium text-slate-900 mb-6">Collective Fund Overview</h1>
 
 {% if fund %}
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Total Balance</p>
-        <p class="text-3xl font-bold text-indigo-700">${{ "%.2f"|format(fund.total_balance) }}</p>
+    <div class="md-card p-6 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Total Balance</p>
+        <p class="text-3xl font-medium text-primary-dark mt-1">${{ "%.2f"|format(fund.total_balance) }}</p>
     </div>
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Total Members</p>
-        <p class="text-3xl font-bold text-gray-800">{{ fund.total_members }}</p>
+    <div class="md-card p-6 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Total Members</p>
+        <p class="text-3xl font-medium text-slate-900 mt-1">{{ fund.total_members }}</p>
     </div>
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Active Loans</p>
-        <p class="text-3xl font-bold text-orange-600">${{ "%.2f"|format(fund.total_active_loans) }}</p>
+    <div class="md-card p-6 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Active Loans</p>
+        <p class="text-3xl font-medium text-amber-700 mt-1">${{ "%.2f"|format(fund.total_active_loans) }}</p>
     </div>
-    <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-gray-500">Available for Lending</p>
-        <p class="text-3xl font-bold text-green-600">${{ "%.2f"|format(fund.available_for_lending) }}</p>
+    <div class="md-card p-6 rounded-xl">
+        <p class="text-sm font-medium text-slate-600">Available for Lending</p>
+        <p class="text-3xl font-medium text-primary mt-1">${{ "%.2f"|format(fund.available_for_lending) }}</p>
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow p-6">
-    <p class="text-sm text-gray-500">Last updated: {{ fund.last_updated[:19] if fund.last_updated is string else fund.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
+<div class="md-card p-6 rounded-xl">
+    <p class="text-sm text-slate-600">Last updated: {{ fund.last_updated[:19] if fund.last_updated is string else fund.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
     {% if is_admin %}
     <button hx-post="/api/admin/snapshots/generate"
             hx-swap="none"
-            class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700"
+            class="mt-3 inline-flex rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition"
             onclick="this.textContent='Generating...'; this.disabled=true;">
         Generate Snapshots & Refresh
     </button>
     {% endif %}
 </div>
 {% else %}
-<div class="bg-white rounded-xl shadow p-6 text-center text-gray-400">
+<div class="md-card p-6 rounded-xl text-center text-slate-500">
     Fund summary not initialized. Run the database setup first.
 </div>
 {% endif %}

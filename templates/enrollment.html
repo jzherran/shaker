@@ -3,16 +3,16 @@
 
 {% block content %}
 <div class="max-w-md mx-auto">
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Complete Your Enrollment</h2>
-        <p class="text-gray-600 mb-6">
+    <div class="md-card rounded-xl p-6">
+        <h2 class="text-2xl font-medium text-slate-900 mb-4">Complete Your Enrollment</h2>
+        <p class="text-slate-600 mb-6">
             Please provide your national identification number to complete your membership enrollment.
         </p>
 
         {% if merge_pending %}
-        <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-6">
-            <p class="font-semibold">Merge Request Pending</p>
-            <p class="text-sm mt-1">
+        <div class="mb-6 rounded-xl border border-primary/20 bg-primary-container px-4 py-3 text-primary-on-container shadow-md1">
+            <p class="font-medium">Merge Request Pending</p>
+            <p class="mt-1 text-sm opacity-90">
                 Your national ID matches an existing member. A merge request has been submitted
                 for admin review. You'll be able to access your full account once approved.
             </p>
@@ -20,7 +20,7 @@
         {% endif %}
 
         {% if error %}
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             {{ error }}
         </div>
         {% endif %}
@@ -28,19 +28,19 @@
         {% if not merge_pending %}
         <form method="POST" action="/enrollment">
             <div class="mb-4">
-                <label for="national_id" class="block text-sm font-medium text-gray-700 mb-1">
+                <label for="national_id" class="mb-1 block text-sm font-medium text-slate-700">
                     National ID Number
                 </label>
                 <input type="text" name="national_id" id="national_id"
                        required minlength="5" maxlength="30"
                        placeholder="Enter your identification number"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                <p class="text-xs text-gray-500 mt-1">
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary/30">
+                <p class="mt-1 text-xs text-slate-500">
                     This will be used to link your account if you use multiple email addresses.
                 </p>
             </div>
             <button type="submit"
-                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 font-medium">
+                    class="w-full rounded-full bg-primary py-2.5 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark">
                 Submit
             </button>
         </form>

@@ -24,6 +24,8 @@ CREATE TABLE public.users (
     national_id TEXT,
     default_contribution_amount NUMERIC(15, 2),
     role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+    approval_status TEXT NOT NULL DEFAULT 'approved'
+        CHECK (approval_status IN ('pending', 'approved', 'rejected')),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -6,7 +6,7 @@ from ..dependencies import templates, get_db
 from ..i18n import locale_from_request, translate, translate_html
 from ..auth import (
     get_current_user, get_current_user_or_none,
-    require_admin, create_session_token,
+    require_approved_user, require_admin, create_session_token,
 )
 from ..models.user import User, UserEnrollment
 from ..config import get_settings
@@ -98,20 +98,13 @@ async def set_session(request: Request):
             .execute()
         )
         if not alias_check.data:
-            # Truly new user — create user + account
+            # Truly new user — create with pending approval, no account yet
             db.table("users").insert({
                 "auth_id": auth_id,
                 "email": email,
                 "full_name": full_name,
+                "approval_status": "pending",
             }).execute()
-
-            user_result = db.table("users").select("id").eq("auth_id", auth_id).execute()
-            user_id = user_result.data[0]["id"]
-            account_number = await account_service.generate_account_number(db)
-            await account_service.create_account(db, account_service.AccountCreate(
-                user_id=user_id,
-                account_number=account_number,
-            ))
 
     token = create_session_token(auth_id, email)
     response = Response(content='{"ok": true}', media_type="application/json")
@@ -134,8 +127,10 @@ async def logout():
 
 @router.get("/enrollment")
 async def enrollment_page(request: Request, user: User = Depends(get_current_user)):
-    if user.national_id:
+    if user.national_id and user.approval_status == "approved":
         return RedirectResponse(url="/dashboard", status_code=302)
+    if user.national_id and user.approval_status != "approved":
+        return RedirectResponse(url="/pending-approval", status_code=302)
 
     db = get_db()
     merge_status = await user_service.get_user_merge_status(db, user.id)
@@ -160,9 +155,11 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
         })
 
     db = get_db()
-    status, merge_request = await user_service.enroll_national_id(db, user.id, national_id)
+    enroll_status, merge_request = await user_service.enroll_national_id(db, user.id, national_id)
 
-    if status == "enrolled":
+    if enroll_status == "enrolled":
+        if user.approval_status != "approved":
+            return RedirectResponse(url="/pending-approval", status_code=302)
         return RedirectResponse(url="/dashboard", status_code=302)
 
     # merge_requested or already_pending
@@ -173,11 +170,22 @@ async def enrollment_submit(request: Request, user: User = Depends(get_current_u
     })
 
 
+@router.get("/pending-approval")
+async def pending_approval_page(request: Request, user: User = Depends(get_current_user)):
+    if user.approval_status == "approved":
+        return RedirectResponse(url="/dashboard", status_code=302)
+    return templates.TemplateResponse(request, "pending_approval.html", {
+        "user": user,
+        "is_admin": user.role == "admin",
+    })
+
+
 @router.get("/dashboard")
 async def dashboard(request: Request, user: User = Depends(get_current_user)):
-    # Redirect to enrollment if national_id not set
     if not user.national_id:
         return RedirectResponse(url="/enrollment", status_code=302)
+    if user.approval_status != "approved":
+        return RedirectResponse(url="/pending-approval", status_code=302)
 
     db = get_db()
     # Check if user has a pending merge (show info on dashboard)

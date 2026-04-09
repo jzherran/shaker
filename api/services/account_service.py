@@ -49,10 +49,12 @@ async def get_account_by_user(db: Client, user_id: str) -> Optional[Account]:
     return _account_from_row(result.data[0])
 
 
-async def get_all_accounts(db: Client) -> list[Account]:
-    result = db.table("accounts").select(
-        "*, users(full_name)"
-    ).order("created_at").execute()
+async def get_all_accounts(db: Client, status: str = None) -> list[Account]:
+    query = db.table("accounts").select("*, users(full_name)")
+    if status and status in ("active", "inactive", "suspended"):
+        query = query.eq("status", status)
+    query = query.order("created_at")
+    result = query.execute()
     return [_account_from_row(row) for row in result.data]
 
 

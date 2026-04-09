@@ -1,5 +1,6 @@
 from supabase import Client
 from ..models.user import User, MergeRequest, MergeRequestDetail
+from ..models.account import AccountCreate
 from typing import Optional
 
 
@@ -130,6 +131,57 @@ async def get_user_merge_status(db: Client, user_id: str) -> Optional[str]:
         .execute()
     )
     return result.data[0]["status"] if result.data else None
+
+
+async def get_pending_users(db: Client) -> list[User]:
+    """Get all users pending admin approval (with national_id set)."""
+    result = (
+        db.table("users")
+        .select("*")
+        .eq("approval_status", "pending")
+        .eq("is_active", True)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return [User(**row) for row in result.data]
+
+
+async def approve_user(db: Client, user_id: str, admin_user_id: str) -> None:
+    """Approve a pending user and create their account."""
+    from . import account_service
+
+    db.table("users").update({
+        "approval_status": "approved",
+        "updated_at": "now()",
+    }).eq("id", user_id).execute()
+
+    existing_account = await account_service.get_account_by_user(db, user_id)
+    if not existing_account:
+        account_number = await account_service.generate_account_number(db)
+        await account_service.create_account(db, AccountCreate(
+            user_id=user_id,
+            account_number=account_number,
+        ))
+
+
+async def reject_user(db: Client, user_id: str) -> None:
+    """Reject a pending user."""
+    db.table("users").update({
+        "approval_status": "rejected",
+        "updated_at": "now()",
+    }).eq("id", user_id).execute()
+
+
+async def get_merged_users(db: Client) -> list[User]:
+    """Get users that were deactivated via identity merge."""
+    result = (
+        db.table("users")
+        .select("*")
+        .eq("is_active", False)
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return [User(**row) for row in result.data]
 
 
 async def get_active_users_with_accounts(db: Client) -> list[dict]:

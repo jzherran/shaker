@@ -1,25 +1,40 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from ..dependencies import templates, get_db
-from ..auth import get_current_user, require_admin
+from ..auth import require_approved_user, require_admin
 from ..models.user import User
-from ..services import account_service
+from ..services import account_service, user_service
 
 router = APIRouter()
 
 
 @router.get("/accounts")
-async def accounts_list(request: Request, user: User = Depends(get_current_user)):
+async def accounts_list(
+    request: Request,
+    user: User = Depends(require_approved_user),
+    status: str = None,
+):
     db = get_db()
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db)
+        accounts = await account_service.get_all_accounts(db, status=status)
+        pending_users = []
+        merged_users = []
+        if status == "pending" or status is None:
+            pending_users = await user_service.get_pending_users(db)
+        if status == "merged" or status is None:
+            merged_users = await user_service.get_merged_users(db)
     else:
         account = await account_service.get_account_by_user(db, user.id)
         accounts = [account] if account else []
+        pending_users = []
+        merged_users = []
 
     return templates.TemplateResponse(request, "accounts/list.html", {
         "user": user,
         "is_admin": user.role == "admin",
         "accounts": accounts,
+        "pending_users": pending_users,
+        "merged_users": merged_users,
+        "filter_status": status,
     })
 
 
@@ -27,7 +42,7 @@ async def accounts_list(request: Request, user: User = Depends(get_current_user)
 async def account_detail(
     request: Request,
     account_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_approved_user),
 ):
     db = get_db()
     summary = await account_service.get_account_summary(db, account_id)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from ..dependencies import templates, get_db
-from ..auth import get_current_user, require_admin
+from ..auth import require_approved_user as get_current_user, require_admin
 from ..models.user import User
 from ..models.contribution import ContributionCreate, BatchContributionCreate, BatchContributionItem
 from ..services import contribution_service, account_service, user_service

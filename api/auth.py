@@ -75,6 +75,22 @@ async def get_current_user(request: Request) -> User:
     return user
 
 
+async def require_approved_user(request: Request) -> User:
+    """Require authenticated AND approved user. Redirects pending users."""
+    user = await get_current_user(request)
+    if user.approval_status != "approved":
+        if _is_api_request(request):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account pending approval",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={"Location": "/pending-approval"},
+        )
+    return user
+
+
 async def require_admin(request: Request) -> User:
     """Require authenticated admin user. Raises 403 if not admin."""
     user = await get_current_user(request)

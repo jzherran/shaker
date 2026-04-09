@@ -22,6 +22,7 @@ class User(BaseModel):
     national_id: Optional[str] = None
     default_contribution_amount: Optional[float] = None
     role: str
+    approval_status: str = "approved"
     is_active: bool
     created_at: datetime
     updated_at: datetime

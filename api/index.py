@@ -1,12 +1,17 @@
 import os
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    # Vercel: env from platform. Local dev: pip install python-dotenv for .env files.
+    pass
 
 app = FastAPI(
     title="Shaker - FONAFAHE",

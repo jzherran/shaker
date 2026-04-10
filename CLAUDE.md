@@ -12,7 +12,7 @@ Shaker (FONAFAHE) is a collaborative funding system where members contribute sav
 # Run locally (dev server with hot reload)
 uvicorn api.index:app --reload --port 8000
 
-# Install dependencies
+# Install dependencies (root requirements.txt includes api/requirements.txt)
 pip install -r requirements.txt
 
 # Lint + format (install dev tools first: pip install -r requirements-dev.txt)

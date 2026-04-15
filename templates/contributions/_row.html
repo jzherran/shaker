@@ -1,23 +1,19 @@
-<tr class="border-t border-slate-100 hover:bg-primary-container/20">
-    <td class="px-6 py-3">{{ c.created_at[:10] if c.created_at is string else c.created_at.strftime('%Y-%m-%d') }}</td>
-    <td class="px-6 py-3">
-        <span class="rounded-full px-2.5 py-1 text-xs font-medium
-            {% if c.contribution_type == 'regular' %}bg-primary-container text-primary-on-container
-            {% elif c.contribution_type == 'extraordinary' %}bg-sky-100 text-sky-900
-            {% else %}bg-slate-100 text-slate-700{% endif %}">
+<tr id="row-{{ c.id }}">
+    <td class="text-gf-text-2">{{ c.created_at.strftime('%Y-%m-%d') if c.created_at is string == false else c.created_at[:10] }}</td>
+    <td>
+        <span class="gf-badge {% if c.contribution_type == 'regular' %}gf-badge-blue{% elif c.contribution_type == 'extraordinary' %}gf-badge-green{% else %}gf-badge-grey{% endif %}">
             {{ t('contributions.types.' ~ c.contribution_type) }}
         </span>
     </td>
-    <td class="px-6 py-3">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
-    <td class="px-6 py-3 text-slate-600">{{ c.description or '-' }}</td>
-    <td class="px-6 py-3 text-right font-medium text-primary-dark">{{ c.amount|cop }}</td>
+    <td class="text-gf-text-2">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
+    <td class="text-gf-text-2">{{ c.description or '' }}</td>
+    <td class="text-right font-medium">{{ c.amount|cop }}</td>
     {% if is_admin is defined and is_admin %}
-    <td class="px-6 py-3">
+    <td>
         <button hx-delete="/api/contributions/{{ c.id }}"
                 hx-confirm="{{ t('contributions.confirm_cancel') }}"
-                hx-target="closest tr"
-                hx-swap="outerHTML"
-                class="text-xs text-red-600 hover:text-red-800 hover:underline">
+                hx-target="#row-{{ c.id }}" hx-swap="outerHTML"
+                class="text-gf-red text-xs font-medium hover:underline">
             {{ t('contributions.cancel') }}
         </button>
     </td>

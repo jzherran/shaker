@@ -3,50 +3,50 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="/accounts" class="text-sm font-medium text-primary hover:underline">&larr; {{ t('accounts.back') }}</a>
-    <h1 class="text-2xl font-medium text-slate-900 mt-2">{{ account.owner_name }}</h1>
-    <p class="text-slate-600">{{ account.email }} &middot; {{ account.account_number }}</p>
+    <a href="/accounts" class="gf-link text-sm">&larr; {{ t('accounts.back') }}</a>
+    <h1 class="gf-page-title mt-2">{{ account.owner_name }}</h1>
+    <p class="text-sm text-gf-text-2 mt-1">{{ account.email }} &middot; {{ account.account_number }}</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="md-card p-5 rounded-xl">
-        <p class="text-sm font-medium text-slate-600">{{ t('accounts.balance') }}</p>
-        <p class="text-2xl font-medium text-primary-dark mt-1">{{ account.balance|cop }}</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('accounts.balance') }}</div>
+        <div class="gf-metric-value">{{ account.balance|cop }}</div>
     </div>
-    <div class="md-card p-5 rounded-xl">
-        <p class="text-sm font-medium text-slate-600">{{ t('accounts.total_contributions') }}</p>
-        <p class="text-2xl font-medium text-primary mt-1">{{ account.total_contributions|cop }}</p>
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('accounts.total_contributions') }}</div>
+        <div class="gf-metric-value gf-positive">{{ account.total_contributions|cop }}</div>
     </div>
-    <div class="md-card p-5 rounded-xl">
-        <p class="text-sm font-medium text-slate-600">{{ t('accounts.loan_disbursements') }}</p>
-        <p class="text-2xl font-medium text-amber-700 mt-1">{{ account.total_loan_disbursements|cop }}</p>
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('accounts.loan_disbursements') }}</div>
+        <div class="gf-metric-value" style="color: var(--gf-amber);">{{ account.total_loan_disbursements|cop }}</div>
     </div>
-    <div class="md-card p-5 rounded-xl">
-        <p class="text-sm font-medium text-slate-600">{{ t('accounts.active_loans') }}</p>
-        <p class="text-2xl font-medium text-sky-700 mt-1">{{ account.active_loans_count }}</p>
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('accounts.active_loans') }}</div>
+        <div class="gf-metric-value">{{ account.active_loans_count }}</div>
     </div>
 </div>
 
-<div class="flex flex-wrap gap-3 mb-6">
-    <a href="/contributions?account_id={{ account.id }}" class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">{{ t('accounts.view_contributions') }}</a>
-    <a href="/loans?account_id={{ account.id }}" class="inline-flex rounded-full border-2 border-primary bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-container transition">{{ t('accounts.view_loans') }}</a>
-    <a href="/reports/balance?account_id={{ account.id }}" class="inline-flex rounded-full bg-primary-light px-4 py-2 text-sm font-medium text-white shadow-md1 hover:opacity-95 transition">{{ t('accounts.balance_history') }}</a>
+<div class="flex flex-wrap gap-3 mb-8">
+    <a href="/contributions?account_id={{ account.id }}" class="gf-btn gf-btn-primary">{{ t('accounts.view_contributions') }}</a>
+    <a href="/loans?account_id={{ account.id }}" class="gf-btn gf-btn-outline">{{ t('accounts.view_loans') }}</a>
+    <a href="/reports/balance?account_id={{ account.id }}" class="gf-btn gf-btn-outline">{{ t('accounts.balance_history') }}</a>
 </div>
 
-<div class="md-card p-6 rounded-xl">
-    <h2 class="text-lg font-medium text-slate-900 mb-3">{{ t('accounts.account_info') }}</h2>
-    <dl class="grid grid-cols-2 gap-4 text-sm">
+<div class="gf-card p-5">
+    <h2 class="gf-section-title">{{ t('accounts.account_info') }}</h2>
+    <dl class="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-8 text-sm">
         <div>
-            <dt class="text-slate-600">{{ t('accounts.status') }}</dt>
-            <dd class="font-medium text-slate-900">{{ t('account_status.' ~ account.status) }}</dd>
+            <dt class="text-gf-text-3 text-xs font-medium uppercase tracking-wide">{{ t('accounts.status') }}</dt>
+            <dd class="mt-1 font-medium">{{ t('account_status.' ~ account.status) }}</dd>
         </div>
         <div>
-            <dt class="text-slate-600">{{ t('accounts.created') }}</dt>
-            <dd>{{ account.created_at[:10] if account.created_at is string else account.created_at.strftime('%Y-%m-%d') }}</dd>
+            <dt class="text-gf-text-3 text-xs font-medium uppercase tracking-wide">{{ t('accounts.created') }}</dt>
+            <dd class="mt-1">{{ account.created_at[:10] if account.created_at is string else account.created_at.strftime('%Y-%m-%d') }}</dd>
         </div>
         <div>
-            <dt class="text-slate-600">{{ t('accounts.last_contribution') }}</dt>
-            <dd>{{ account.last_contribution_at[:10] if account.last_contribution_at else t('accounts.never') }}</dd>
+            <dt class="text-gf-text-3 text-xs font-medium uppercase tracking-wide">{{ t('accounts.last_contribution') }}</dt>
+            <dd class="mt-1">{{ account.last_contribution_at[:10] if account.last_contribution_at else t('accounts.never') }}</dd>
         </div>
     </dl>
 </div>

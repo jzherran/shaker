@@ -2,80 +2,118 @@
 {% block title %}{{ t('meta.dashboard') }}{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-2xl font-medium text-slate-900 tracking-tight">{{ t('dashboard.welcome', name=user.full_name) }}</h1>
-    <p class="text-slate-600 mt-1">{{ t('dashboard.subtitle') }}</p>
+<div class="mb-6">
+    <h1 class="gf-page-title">{{ t('dashboard.welcome', name=user.full_name) }}</h1>
+    <p class="text-sm text-gf-text-2 mt-1">{{ t('dashboard.subtitle') }}</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+{# ── Metric cards ── #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
     {% if account %}
-    <div class="md-card p-6">
-        <p class="text-sm text-slate-600 font-medium">{{ t('dashboard.your_balance') }}</p>
-        <p class="text-3xl font-medium text-primary-dark mt-1">{{ account.balance|cop }}</p>
-        <p class="text-xs text-slate-500 mt-2">{{ account.owner_name }}</p>
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('dashboard.your_balance') }}</div>
+        <div class="gf-metric-value">{{ account.balance|cop }}</div>
+        <div class="gf-metric-sub">{{ account.owner_name }}</div>
     </div>
     {% endif %}
 
     {% if fund %}
-    <div class="md-card p-6">
-        <p class="text-sm text-slate-600 font-medium">{{ t('dashboard.collective_fund') }}</p>
-        <p class="text-3xl font-medium text-primary-dark mt-1">{{ fund.total_balance|cop }}</p>
-        <p class="text-xs text-slate-500 mt-2">{{ fund.total_members }} {{ t('dashboard.members') }}</p>
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('dashboard.collective_fund') }}</div>
+        <div class="gf-metric-value">{{ fund.total_balance|cop }}</div>
+        <div class="gf-metric-sub">{{ fund.total_members }} {{ t('dashboard.members') }}</div>
     </div>
-    <div class="md-card p-6">
-        <p class="text-sm text-slate-600 font-medium">{{ t('dashboard.available_lending') }}</p>
-        <p class="text-3xl font-medium text-primary mt-1">{{ fund.available_for_lending|cop }}</p>
-        <p class="text-xs text-slate-500 mt-2">{{ t('dashboard.active_loans_prefix') }} {{ fund.total_active_loans|cop }}</p>
+    <div class="gf-card gf-metric">
+        <div class="gf-metric-label">{{ t('dashboard.available_lending') }}</div>
+        <div class="gf-metric-value gf-positive">{{ fund.available_for_lending|cop }}</div>
+        <div class="gf-metric-sub">{{ t('dashboard.active_loans_prefix') }} {{ fund.total_active_loans|cop }}</div>
     </div>
     {% endif %}
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+{# ── Quick actions ── #}
+<div class="flex flex-wrap gap-3 mb-8">
     {% if is_admin %}
-    <a href="/contributions/new" class="block rounded-xl bg-primary p-6 text-center text-white shadow-md2 transition hover:bg-primary-dark hover:shadow-md3">
-        <p class="text-lg font-medium">{{ t('dashboard.record_contribution') }}</p>
-        <p class="text-sm opacity-90 mt-1">{{ t('dashboard.record_contribution_sub') }}</p>
+    <a href="/contributions/new" class="gf-btn gf-btn-primary">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        {{ t('dashboard.record_contribution') }}
     </a>
     {% endif %}
-    <a href="/loans/request" class="block rounded-xl border-2 border-primary bg-primary-container p-6 text-center text-primary-on-container shadow-md1 transition hover:bg-sky-100/80">
-        <p class="text-lg font-medium">{{ t('dashboard.request_loan') }}</p>
-        <p class="text-sm opacity-90 mt-1">{{ t('dashboard.request_loan_sub') }}</p>
+    <a href="/loans/request" class="gf-btn gf-btn-outline">
+        {{ t('dashboard.request_loan') }}
     </a>
 </div>
 
+{# ── Recent contributions with chart ── #}
 {% if recent_contributions %}
-<div class="md-card p-6">
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-medium text-slate-900">{{ t('dashboard.recent_contributions') }}</h2>
-        <a href="/contributions" class="text-primary text-sm font-medium hover:underline">{{ t('dashboard.view_all') }}</a>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 gf-card">
+        <div class="flex items-center justify-between p-4 border-b border-gf-border">
+            <h2 class="gf-section-title mb-0">{{ t('dashboard.recent_contributions') }}</h2>
+            <a href="/contributions" class="gf-link text-sm">{{ t('dashboard.view_all') }}</a>
+        </div>
+        <table class="gf-table">
+            <thead>
+                <tr>
+                    <th>{{ t('dashboard.date') }}</th>
+                    <th>{{ t('dashboard.type') }}</th>
+                    <th>{{ t('dashboard.period') }}</th>
+                    <th class="text-right">{{ t('dashboard.amount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in recent_contributions %}
+                <tr>
+                    <td class="text-gf-text-2">{{ c.created_at.strftime('%Y-%m-%d') if c.created_at is string == false else c.created_at[:10] }}</td>
+                    <td>
+                        <span class="gf-badge {% if c.contribution_type == 'regular' %}gf-badge-blue{% elif c.contribution_type == 'extraordinary' %}gf-badge-green{% else %}gf-badge-grey{% endif %}">
+                            {{ t('contributions.types.' ~ c.contribution_type) }}
+                        </span>
+                    </td>
+                    <td class="text-gf-text-2">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
+                    <td class="text-right font-medium">{{ c.amount|cop }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    <table class="w-full text-sm">
-        <thead>
-            <tr class="text-left text-slate-600 border-b border-slate-200">
-                <th class="pb-2 font-medium">{{ t('dashboard.date') }}</th>
-                <th class="pb-2 font-medium">{{ t('dashboard.type') }}</th>
-                <th class="pb-2 font-medium">{{ t('dashboard.period') }}</th>
-                <th class="pb-2 text-right font-medium">{{ t('dashboard.amount') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for c in recent_contributions %}
-            <tr class="border-b border-slate-100 last:border-0">
-                <td class="py-3">{{ c.created_at.strftime('%Y-%m-%d') if c.created_at is string == false else c.created_at[:10] }}</td>
-                <td class="py-3">
-                    <span class="px-2.5 py-1 rounded-full text-xs font-medium
-                        {% if c.contribution_type == 'regular' %}bg-primary-container text-primary-on-container
-                        {% elif c.contribution_type == 'extraordinary' %}bg-sky-100 text-sky-900
-                        {% else %}bg-slate-100 text-slate-700{% endif %}">
-                        {{ t('contributions.types.' ~ c.contribution_type) }}
-                    </span>
-                </td>
-                <td class="py-3">{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}</td>
-                <td class="py-3 text-right font-medium text-primary-dark">{{ c.amount|cop }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <div class="gf-card p-4">
+        <h3 class="text-xs font-medium text-gf-text-3 uppercase tracking-wide mb-3">{{ t('dashboard.recent_contributions') }}</h3>
+        <div class="gf-chart-container" style="height: 200px;">
+            <canvas id="contrib-chart"></canvas>
+        </div>
+    </div>
 </div>
+
+<script>
+(function() {
+    const labels = [{% for c in recent_contributions|reverse %}'{{ c.period_year }}-{{ "%02d"|format(c.period_month) }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    const data = [{% for c in recent_contributions|reverse %}{{ c.amount }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+    new Chart(document.getElementById('contrib-chart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: '#e8f0fe',
+                borderColor: '#1a73e8',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#80868b' } },
+                y: { grid: { color: '#e8eaed' }, ticks: { font: { size: 11 }, color: '#80868b', callback: v => formatCOP(v) } },
+            },
+        },
+    });
+})();
+</script>
 {% endif %}
 {% endblock %}

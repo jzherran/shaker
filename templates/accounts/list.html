@@ -3,16 +3,16 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-medium text-slate-900">{{ t('accounts.title') }}</h1>
+    <h1 class="gf-page-title">{{ t('accounts.title') }}</h1>
 </div>
 
 {% if is_admin %}
 <div class="flex flex-wrap gap-2 mb-6">
-    <a href="/accounts" class="px-3 py-1.5 rounded-full text-sm font-medium {% if not filter_status %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('accounts.filter_all') }}</a>
-    <a href="/accounts?status=active" class="px-3 py-1.5 rounded-full text-sm font-medium {% if filter_status == 'active' %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('accounts.filter_active') }}</a>
-    <a href="/accounts?status=pending" class="px-3 py-1.5 rounded-full text-sm font-medium {% if filter_status == 'pending' %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('accounts.filter_pending') }}</a>
-    <a href="/accounts?status=merge_requests" class="px-3 py-1.5 rounded-full text-sm font-medium {% if filter_status == 'merge_requests' %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('accounts.filter_merge_requests') }}</a>
-    <a href="/accounts?status=merged" class="px-3 py-1.5 rounded-full text-sm font-medium {% if filter_status == 'merged' %}bg-primary text-white shadow-sm{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">{{ t('accounts.filter_merged') }}</a>
+    <a href="/accounts" class="gf-chip {% if not filter_status %}active{% endif %}">{{ t('accounts.filter_all') }}</a>
+    <a href="/accounts?status=active" class="gf-chip {% if filter_status == 'active' %}active{% endif %}">{{ t('accounts.filter_active') }}</a>
+    <a href="/accounts?status=pending" class="gf-chip {% if filter_status == 'pending' %}active{% endif %}">{{ t('accounts.filter_pending') }}</a>
+    <a href="/accounts?status=merge_requests" class="gf-chip {% if filter_status == 'merge_requests' %}active{% endif %}">{{ t('accounts.filter_merge_requests') }}</a>
+    <a href="/accounts?status=merged" class="gf-chip {% if filter_status == 'merged' %}active{% endif %}">{{ t('accounts.filter_merged') }}</a>
 </div>
 {% endif %}
 
@@ -22,82 +22,67 @@
 {% set has_merged = (is_admin and merged_users and (filter_status == 'merged' or not filter_status)) %}
 {% set has_any = show_accounts or has_pending or has_merges or has_merged %}
 
-<div class="md-card overflow-hidden rounded-xl">
-    <table class="w-full text-sm">
-        <thead class="bg-slate-50/80">
-            <tr class="text-left text-slate-600">
-                <th class="px-6 py-3">{{ t('accounts.member') }}</th>
-                <th class="px-6 py-3">{{ t('accounts.balance') }}</th>
-                <th class="px-6 py-3">{{ t('accounts.status') }}</th>
-                <th class="px-6 py-3">{{ t('accounts.created') }}</th>
-                <th class="px-6 py-3"></th>
+<div class="gf-card overflow-hidden">
+    <table class="gf-table">
+        <thead>
+            <tr>
+                <th>{{ t('accounts.member') }}</th>
+                <th>{{ t('accounts.balance') }}</th>
+                <th>{{ t('accounts.status') }}</th>
+                <th>{{ t('accounts.created') }}</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            {# ── Active / regular accounts ── #}
             {% if show_accounts %}
             {% for a in accounts %}
-            <tr class="border-t border-slate-100 hover:bg-primary-container/25">
-                <td class="px-6 py-4 font-medium">{{ a.owner_name or a.account_number }}</td>
-                <td class="px-6 py-4 font-medium text-primary-dark">{{ a.balance|cop }}</td>
-                <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium
-                        {% if a.status == 'active' %}bg-emerald-100 text-emerald-800
-                        {% elif a.status == 'suspended' %}bg-red-100 text-red-700
-                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+            <tr>
+                <td class="font-medium">{{ a.owner_name or a.account_number }}</td>
+                <td class="font-medium">{{ a.balance|cop }}</td>
+                <td>
+                    <span class="gf-badge {% if a.status == 'active' %}gf-badge-green{% elif a.status == 'suspended' %}gf-badge-red{% else %}gf-badge-grey{% endif %}">
                         {{ t('account_status.' ~ a.status) }}
                     </span>
                 </td>
-                <td class="px-6 py-4 text-gray-500">{{ a.created_at[:10] if a.created_at is string else a.created_at.strftime('%Y-%m-%d') }}</td>
-                <td class="px-6 py-4">
-                    <a href="/accounts/{{ a.id }}" class="font-medium text-primary hover:underline">{{ t('accounts.view') }}</a>
+                <td class="text-gf-text-2">{{ a.created_at[:10] if a.created_at is string else a.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <a href="/accounts/{{ a.id }}" class="gf-link text-sm">{{ t('accounts.view') }}</a>
                 </td>
             </tr>
             {% endfor %}
             {% endif %}
 
-            {# ── Pending users (expandable rows) ── #}
+            {# ── Pending users ── #}
             {% if has_pending %}
             {% for pu in pending_users %}
-            <tr class="border-t border-slate-100 hover:bg-amber-50/40 cursor-pointer select-none"
-                onclick="document.getElementById('panel-pu-{{ pu.id }}').classList.toggle('hidden')">
-                <td class="px-6 py-4 font-medium">
+            <tr class="cursor-pointer" onclick="document.getElementById('panel-pu-{{ pu.id }}').classList.toggle('hidden')">
+                <td class="font-medium">
                     {{ pu.full_name }}
-                    <span class="ml-1 text-xs text-gray-400">{{ pu.email }}</span>
+                    <span class="text-xs text-gf-text-3 ml-1">{{ pu.email }}</span>
                 </td>
-                <td class="px-6 py-4 text-gray-400">—</td>
-                <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">{{ t('accounts.status_pending') }}</span>
-                </td>
-                <td class="px-6 py-4 text-gray-500">{{ pu.created_at[:10] if pu.created_at is string else pu.created_at.strftime('%Y-%m-%d') }}</td>
-                <td class="px-6 py-4 text-gray-400">
-                    <svg class="inline h-4 w-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
+                <td class="text-gf-text-3">&mdash;</td>
+                <td><span class="gf-badge gf-badge-amber">{{ t('accounts.status_pending') }}</span></td>
+                <td class="text-gf-text-2">{{ pu.created_at[:10] if pu.created_at is string else pu.created_at.strftime('%Y-%m-%d') }}</td>
+                <td class="text-gf-text-3">
+                    <svg class="inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </td>
             </tr>
             <tr id="panel-pu-{{ pu.id }}" class="hidden">
-                <td colspan="5" class="px-6 py-4 bg-amber-50/60 border-t border-amber-200/60">
+                <td colspan="5" class="gf-expand-panel px-4 py-4">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm text-slate-700">
-                            <span class="font-medium">{{ t('profile.national_id') }}:</span>
+                        <div class="text-sm">
+                            <span class="font-medium text-gf-text-2">{{ t('profile.national_id') }}:</span>
                             <span class="font-mono ml-1">{{ pu.national_id or '—' }}</span>
                         </div>
                         <div class="flex gap-2" id="actions-pu-{{ pu.id }}">
                             <button hx-post="/api/users/{{ pu.id }}/approve"
                                     hx-confirm="{{ t('admin.confirm_approve_user') }}"
-                                    hx-target="#actions-pu-{{ pu.id }}"
-                                    hx-swap="innerHTML"
-                                    class="rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-dark">
-                                {{ t('admin.approve') }}
-                            </button>
+                                    hx-target="#actions-pu-{{ pu.id }}" hx-swap="innerHTML"
+                                    class="gf-btn gf-btn-primary text-xs px-4 py-1.5">{{ t('admin.approve') }}</button>
                             <button hx-post="/api/users/{{ pu.id }}/reject"
                                     hx-confirm="{{ t('admin.confirm_reject_user') }}"
-                                    hx-target="#actions-pu-{{ pu.id }}"
-                                    hx-swap="innerHTML"
-                                    class="rounded-full bg-red-600 px-4 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700">
-                                {{ t('admin.reject') }}
-                            </button>
+                                    hx-target="#actions-pu-{{ pu.id }}" hx-swap="innerHTML"
+                                    class="gf-btn gf-btn-danger text-xs px-4 py-1.5">{{ t('admin.reject') }}</button>
                         </div>
                     </div>
                 </td>
@@ -105,60 +90,38 @@
             {% endfor %}
             {% endif %}
 
-            {# ── Merge requests (expandable rows) ── #}
+            {# ── Merge requests ── #}
             {% if has_merges %}
             {% for mr in merge_requests %}
-            <tr class="border-t border-slate-100 hover:bg-violet-50/40 cursor-pointer select-none"
-                onclick="document.getElementById('panel-mr-{{ mr.id }}').classList.toggle('hidden')">
-                <td class="px-6 py-4 font-medium">
+            <tr class="cursor-pointer" onclick="document.getElementById('panel-mr-{{ mr.id }}').classList.toggle('hidden')">
+                <td class="font-medium">
                     {{ mr.requesting_user_name }}
-                    <span class="ml-1 text-xs text-gray-400">{{ mr.requesting_user_email }}</span>
+                    <span class="text-xs text-gf-text-3 ml-1">{{ mr.requesting_user_email }}</span>
                 </td>
-                <td class="px-6 py-4 text-gray-400">—</td>
-                <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-violet-100 text-violet-800">{{ t('accounts.status_merge_request') }}</span>
-                </td>
-                <td class="px-6 py-4 text-gray-500">{{ mr.created_at[:10] if mr.created_at is string else mr.created_at.strftime('%Y-%m-%d') }}</td>
-                <td class="px-6 py-4 text-gray-400">
-                    <svg class="inline h-4 w-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
+                <td class="text-gf-text-3">&mdash;</td>
+                <td><span class="gf-badge gf-badge-blue">{{ t('accounts.status_merge_request') }}</span></td>
+                <td class="text-gf-text-2">{{ mr.created_at[:10] if mr.created_at is string else mr.created_at.strftime('%Y-%m-%d') }}</td>
+                <td class="text-gf-text-3">
+                    <svg class="inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </td>
             </tr>
             <tr id="panel-mr-{{ mr.id }}" class="hidden">
-                <td colspan="5" class="px-6 py-4 bg-violet-50/60 border-t border-violet-200/60">
+                <td colspan="5" class="gf-expand-panel px-4 py-4">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm text-slate-700 space-y-1">
-                            <div>
-                                <span class="font-medium">{{ t('admin.requesting') }}:</span>
-                                <span class="ml-1">{{ mr.requesting_user_name }}</span>
-                                <span class="text-xs text-gray-400 ml-1">{{ mr.requesting_user_email }}</span>
-                            </div>
-                            <div>
-                                <span class="font-medium">{{ t('admin.target') }}:</span>
-                                <span class="ml-1">{{ mr.target_user_name }}</span>
-                                <span class="text-xs text-gray-400 ml-1">{{ mr.target_user_email }}</span>
-                            </div>
-                            <div>
-                                <span class="font-medium">{{ t('admin.national_id') }}:</span>
-                                <span class="font-mono ml-1">{{ mr.national_id }}</span>
-                            </div>
+                        <div class="text-sm space-y-1">
+                            <div><span class="font-medium text-gf-text-2">{{ t('admin.requesting') }}:</span> {{ mr.requesting_user_name }} <span class="text-xs text-gf-text-3">{{ mr.requesting_user_email }}</span></div>
+                            <div><span class="font-medium text-gf-text-2">{{ t('admin.target') }}:</span> {{ mr.target_user_name }} <span class="text-xs text-gf-text-3">{{ mr.target_user_email }}</span></div>
+                            <div><span class="font-medium text-gf-text-2">{{ t('admin.national_id') }}:</span> <span class="font-mono">{{ mr.national_id }}</span></div>
                         </div>
                         <div class="flex gap-2" id="actions-mr-{{ mr.id }}">
                             <button hx-post="/api/merge-requests/{{ mr.id }}/approve"
                                     hx-confirm="{{ t('admin.confirm_approve') }}"
-                                    hx-target="#actions-mr-{{ mr.id }}"
-                                    hx-swap="innerHTML"
-                                    class="rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-dark">
-                                {{ t('admin.approve') }}
-                            </button>
+                                    hx-target="#actions-mr-{{ mr.id }}" hx-swap="innerHTML"
+                                    class="gf-btn gf-btn-primary text-xs px-4 py-1.5">{{ t('admin.approve') }}</button>
                             <button hx-post="/api/merge-requests/{{ mr.id }}/reject"
                                     hx-confirm="{{ t('admin.confirm_reject') }}"
-                                    hx-target="#actions-mr-{{ mr.id }}"
-                                    hx-swap="innerHTML"
-                                    class="rounded-full bg-red-600 px-4 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700">
-                                {{ t('admin.reject') }}
-                            </button>
+                                    hx-target="#actions-mr-{{ mr.id }}" hx-swap="innerHTML"
+                                    class="gf-btn gf-btn-danger text-xs px-4 py-1.5">{{ t('admin.reject') }}</button>
                         </div>
                     </div>
                 </td>
@@ -166,25 +129,22 @@
             {% endfor %}
             {% endif %}
 
-            {# ── Merged / inactive users ── #}
+            {# ── Merged users ── #}
             {% if has_merged %}
             {% for mu in merged_users %}
-            <tr class="border-t border-slate-100 hover:bg-slate-50/40">
-                <td class="px-6 py-4 font-medium text-gray-400">{{ mu.full_name }}</td>
-                <td class="px-6 py-4 text-gray-400">—</td>
-                <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ t('accounts.status_merged') }}</span>
-                </td>
-                <td class="px-6 py-4 text-gray-400">{{ mu.created_at[:10] if mu.created_at is string else mu.created_at.strftime('%Y-%m-%d') }}</td>
-                <td class="px-6 py-4"></td>
+            <tr>
+                <td class="text-gf-text-3">{{ mu.full_name }}</td>
+                <td class="text-gf-text-3">&mdash;</td>
+                <td><span class="gf-badge gf-badge-grey">{{ t('accounts.status_merged') }}</span></td>
+                <td class="text-gf-text-3">{{ mu.created_at[:10] if mu.created_at is string else mu.created_at.strftime('%Y-%m-%d') }}</td>
+                <td></td>
             </tr>
             {% endfor %}
             {% endif %}
 
-            {# ── Empty states ── #}
             {% if not has_any %}
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                <td colspan="5" class="gf-empty">
                     {% if filter_status == 'pending' %}{{ t('admin.no_pending_users') }}
                     {% elif filter_status == 'merge_requests' %}{{ t('admin.no_merge_requests') }}
                     {% elif filter_status == 'merged' %}{{ t('accounts.no_merged') }}

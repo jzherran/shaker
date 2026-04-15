@@ -1,10 +1,5 @@
-<div class="rounded-xl border border-primary/20 bg-primary-container px-4 py-3 text-primary-on-container shadow-md1">
-    <p class="font-medium">{{ t('contributions.batch_success') }}</p>
-    <p class="mt-1 text-sm">
-        {% if count == 1 %}
-        {{ t('contributions.batch_success_one', total=total|cop) }}
-        {% else %}
-        {{ t('contributions.batch_success_many', count=count, total=total|cop) }}
-        {% endif %}
+<div class="gf-card p-4 border-gf-green-bg" style="border-color: var(--gf-green-bg); background: var(--gf-green-bg);">
+    <p class="text-sm font-medium" style="color: var(--gf-green);">
+        {{ t('contributions.batch_success', count=count, total=total|cop) }}
     </p>
 </div>

@@ -3,52 +3,53 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-medium text-slate-900">{{ t('contributions.title') }}</h1>
+    <h1 class="gf-page-title">{{ t('contributions.title') }}</h1>
     <div class="flex flex-wrap gap-2">
-        <a href="/contributions/new" class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">
+        <a href="/contributions/new" class="gf-btn gf-btn-primary">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             {{ t('contributions.new') }}
         </a>
         {% if is_admin %}
-        <a href="/contributions/batch" class="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 transition">
-            {{ t('contributions.batch') }}
-        </a>
+        <a href="/contributions/batch" class="gf-btn gf-btn-outline">{{ t('contributions.batch') }}</a>
         {% endif %}
     </div>
 </div>
 
 {% if is_admin %}
-<form method="get" class="md-card rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end">
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">{{ t('contributions.account_filter') }}</label>
-        <select name="account_id" class="border rounded px-3 py-2 text-sm">
-            <option value="">{{ t('contributions.all_accounts') }}</option>
-            {% for a in accounts %}
-            <option value="{{ a.id }}" {% if filter_account_id == a.id %}selected{% endif %}>{{ a.owner_name or a.account_number }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">{{ t('contributions.year') }}</label>
-        <input type="number" name="year" value="{{ filter_year or '' }}" placeholder="2026" class="border rounded px-3 py-2 text-sm w-24">
-    </div>
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">{{ t('contributions.month') }}</label>
-        <input type="number" name="month" value="{{ filter_month or '' }}" min="1" max="12" placeholder="1-12" class="border rounded px-3 py-2 text-sm w-20">
-    </div>
-    <button type="submit" class="rounded-full bg-primary-dark px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary transition">{{ t('contributions.filter') }}</button>
-</form>
+<div class="gf-card p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="gf-label">{{ t('contributions.account_filter') }}</label>
+            <select name="account_id" class="gf-select" style="width: auto; min-width: 200px;">
+                <option value="">{{ t('contributions.all_accounts') }}</option>
+                {% for a in accounts %}
+                <option value="{{ a.id }}" {% if filter_account_id == a.id %}selected{% endif %}>{{ a.owner_name or a.account_number }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="gf-label">{{ t('contributions.year') }}</label>
+            <input type="number" name="year" value="{{ filter_year or '' }}" placeholder="2026" class="gf-input" style="width: 100px;">
+        </div>
+        <div>
+            <label class="gf-label">{{ t('contributions.month') }}</label>
+            <input type="number" name="month" value="{{ filter_month or '' }}" min="1" max="12" placeholder="1-12" class="gf-input" style="width: 80px;">
+        </div>
+        <button type="submit" class="gf-btn gf-btn-primary">{{ t('contributions.filter') }}</button>
+    </form>
+</div>
 {% endif %}
 
-<div class="md-card overflow-hidden rounded-xl">
-    <table class="w-full text-sm">
-        <thead class="bg-slate-50/80">
-            <tr class="text-left text-slate-600">
-                <th class="px-6 py-3">{{ t('dashboard.date') }}</th>
-                <th class="px-6 py-3">{{ t('dashboard.type') }}</th>
-                <th class="px-6 py-3">{{ t('dashboard.period') }}</th>
-                <th class="px-6 py-3">{{ t('contributions.description') }}</th>
-                <th class="px-6 py-3 text-right">{{ t('dashboard.amount') }}</th>
-                {% if is_admin %}<th class="px-6 py-3"></th>{% endif %}
+<div class="gf-card overflow-hidden">
+    <table class="gf-table">
+        <thead>
+            <tr>
+                <th>{{ t('dashboard.date') }}</th>
+                <th>{{ t('dashboard.type') }}</th>
+                <th>{{ t('dashboard.period') }}</th>
+                <th>{{ t('contributions.description') }}</th>
+                <th class="text-right">{{ t('dashboard.amount') }}</th>
+                {% if is_admin %}<th></th>{% endif %}
             </tr>
         </thead>
         <tbody id="contribution-list">
@@ -57,7 +58,7 @@
             {% endfor %}
             {% if not contributions %}
             <tr>
-                <td colspan="6" class="px-6 py-8 text-center text-slate-500">{{ t('contributions.empty') }}</td>
+                <td colspan="6" class="gf-empty">{{ t('contributions.empty') }}</td>
             </tr>
             {% endif %}
         </tbody>

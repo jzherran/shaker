@@ -3,11 +3,11 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="/loans" class="text-sm font-medium text-primary hover:underline">&larr; {{ t('loans.back') }}</a>
-    <h1 class="text-2xl font-medium text-slate-900 mt-2">{{ t('loans.request_title') }}</h1>
+    <a href="/loans" class="gf-link text-sm">&larr; {{ t('loans.back') }}</a>
+    <h1 class="gf-page-title mt-2">{{ t('loans.request_title') }}</h1>
 </div>
 
-<div class="md-card max-w-2xl rounded-xl p-6">
+<div class="gf-card max-w-2xl p-6">
     <form id="loan-form"
           data-help-individual="{{ t('loans.help.individual')|e }}"
           data-help-group="{{ t('loans.help.group')|e }}"
@@ -15,11 +15,11 @@
           data-requester-account="{{ account.id if account else '' }}"
           data-requester-name="{{ user.full_name }}"
           data-requester-available="{{ available_balance }}">
-        <div class="space-y-4">
+        <div class="space-y-5">
             {% if is_admin and accounts %}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
-                <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="gf-label">{{ t('loans.account') }}</label>
+                <select name="account_id" required class="gf-select">
                     {% for a in accounts %}
                     <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount=a.balance|cop) }})</option>
                     {% endfor %}
@@ -27,57 +27,57 @@
             </div>
             {% elif account %}
             <input type="hidden" name="account_id" value="{{ account.id }}">
-            <p class="text-sm text-gray-500">{{ t('loans.account_line', name=account.owner_name or account.account_number, balance=account.balance|cop) }}</p>
+            <p class="text-sm text-gf-text-2">{{ t('loans.account_line', name=account.owner_name or account.account_number, balance=account.balance|cop) }}</p>
             {% endif %}
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.amount_requested') }}</label>
+                <label class="gf-label">{{ t('loans.amount_requested') }}</label>
                 <input type="number" name="amount_requested" id="amount-requested" step="0.01" min="0.01" required
-                    class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00">
+                    class="gf-input" placeholder="0.00">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.backing_type') }}</label>
-                <select name="backing_type" id="backing-type" required class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="gf-label">{{ t('loans.backing_type') }}</label>
+                <select name="backing_type" id="backing-type" required class="gf-select">
                     <option value="individual">{{ t('loans.backing_options.individual') }}</option>
                     <option value="group">{{ t('loans.backing_options.group') }}</option>
                     <option value="collective">{{ t('loans.backing_options.collective') }}</option>
                 </select>
-                <p id="backing-help" class="text-xs text-gray-400 mt-1"></p>
+                <p id="backing-help" class="text-xs text-gf-text-3 mt-1"></p>
             </div>
 
-            {# ── Guarantors widget (visible only for group backing) ── #}
+            {# ── Guarantors widget ── #}
             <div id="guarantors-section" class="hidden">
-                <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('loans.guarantors_label') }}</label>
+                <label class="gf-label">{{ t('loans.guarantors_label') }}</label>
 
                 <div id="guarantors-list" class="space-y-2"></div>
 
                 <div class="relative mt-3">
                     <input type="text" id="guarantor-search" autocomplete="off"
                            placeholder="{{ t('loans.guarantor_search_placeholder') }}"
-                           class="w-full border rounded-lg px-3 py-2 text-sm pr-8">
-                    <svg class="absolute right-2.5 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           class="gf-input pr-8">
+                    <svg class="absolute right-3 top-3 h-4 w-4 text-gf-text-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    <div id="search-results" class="hidden absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-md3 max-h-48 overflow-y-auto"></div>
+                    <div id="search-results" class="hidden absolute z-10 w-full mt-1 bg-white border border-gf-border rounded shadow-lg max-h-48 overflow-y-auto"></div>
                 </div>
 
-                {# ── Loan summary card ── #}
-                <div id="loan-summary" class="hidden mt-4 rounded-xl border border-primary/20 bg-primary-container/40 p-4">
-                    <h3 class="text-sm font-medium text-slate-800 mb-3">{{ t('loans.summary_title') }}</h3>
+                {# ── Loan summary ── #}
+                <div id="loan-summary" class="hidden mt-4 gf-card p-4" style="border-color: var(--gf-blue-bg); background: var(--gf-blue-bg);">
+                    <h3 class="text-xs font-medium text-gf-text-2 uppercase tracking-wide mb-3">{{ t('loans.summary_title') }}</h3>
                     <div class="space-y-1.5 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-slate-600">{{ t('loans.summary_total') }}</span>
+                            <span class="text-gf-text-2">{{ t('loans.summary_total') }}</span>
                             <span class="font-medium" id="summary-total">$ 0</span>
                         </div>
                         <div id="summary-guarantors"></div>
                         <div id="summary-fund-row" class="hidden flex justify-between">
-                            <span class="text-amber-700 font-medium">FONAFAHE</span>
-                            <span class="font-medium text-amber-700" id="summary-fund">$ 0</span>
+                            <span class="font-medium" style="color:var(--gf-amber)">FONAFAHE</span>
+                            <span class="font-medium" style="color:var(--gf-amber)" id="summary-fund">$ 0</span>
                         </div>
-                        <div class="border-t border-primary/15 pt-1.5 flex justify-between">
-                            <span class="text-slate-600 font-medium">{{ t('loans.summary_covered') }}</span>
-                            <span class="font-medium text-emerald-700" id="summary-covered">$ 0</span>
+                        <div class="border-t pt-1.5 flex justify-between" style="border-color: rgba(26,115,232,0.2);">
+                            <span class="text-gf-text-2 font-medium">{{ t('loans.summary_covered') }}</span>
+                            <span class="font-medium gf-positive" id="summary-covered">$ 0</span>
                         </div>
                     </div>
                 </div>
@@ -85,27 +85,21 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.interest_rate') }}</label>
-                    <input type="number" name="interest_rate" step="0.01" value="2.00"
-                        class="w-full border rounded-lg px-3 py-2 text-sm">
+                    <label class="gf-label">{{ t('loans.interest_rate') }}</label>
+                    <input type="number" name="interest_rate" step="0.01" value="2.00" class="gf-input">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.term_months') }}</label>
-                    <input type="number" name="term_months" min="1" max="60" required
-                        class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="12">
+                    <label class="gf-label">{{ t('loans.term_months') }}</label>
+                    <input type="number" name="term_months" min="1" max="60" required class="gf-input" placeholder="12">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.purpose') }}</label>
-                <textarea name="purpose" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="{{ t('loans.purpose_placeholder') }}"></textarea>
+                <label class="gf-label">{{ t('loans.purpose') }}</label>
+                <textarea name="purpose" rows="2" class="gf-input" placeholder="{{ t('loans.purpose_placeholder') }}"></textarea>
             </div>
 
-            <button type="submit"
-                class="w-full rounded-full bg-primary py-3 text-sm font-medium text-white shadow-md2 hover:bg-primary-dark transition">
-                {{ t('loans.submit') }}
-            </button>
+            <button type="submit" class="gf-btn gf-btn-primary w-full py-2.5">{{ t('loans.submit') }}</button>
         </div>
     </form>
 
@@ -167,7 +161,6 @@
     });
     helpEl.textContent = helpTexts['individual'];
 
-    // Search members
     searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         const q = searchInput.value.trim();
@@ -193,17 +186,14 @@
         const addedIds = new Set(guarantors.map(g => g.account_id));
         const filtered = members.filter(m => !addedIds.has(m.account_id));
 
-        if (filtered.length === 0) {
-            searchResults.classList.add('hidden');
-            return;
-        }
+        if (filtered.length === 0) { searchResults.classList.add('hidden'); return; }
 
         searchResults.innerHTML = filtered.map(m =>
-            '<div class="px-3 py-2 hover:bg-primary-container/40 cursor-pointer text-sm border-b last:border-0" data-id="' +
+            '<div class="px-3 py-2 hover:bg-gf-hover cursor-pointer text-sm border-b last:border-0" data-id="' +
             m.account_id + '" data-name="' + m.full_name + '" data-available="' + m.available_balance + '">' +
             '<span class="font-medium">' + m.full_name + '</span>' +
-            '<span class="text-xs text-gray-400 ml-2">' + m.account_number + '</span>' +
-            '<span class="text-xs text-emerald-600 float-right">' + i18n.available + ': ' + formatCOP(m.available_balance) + '</span>' +
+            '<span class="text-xs text-gf-text-3 ml-2">' + m.account_number + '</span>' +
+            '<span class="text-xs gf-positive float-right">' + i18n.available + ': ' + formatCOP(m.available_balance) + '</span>' +
             '</div>'
         ).join('');
 
@@ -214,7 +204,6 @@
                 searchResults.classList.add('hidden');
             });
         });
-
         searchResults.classList.remove('hidden');
     }
 
@@ -232,29 +221,29 @@
     function renderGuarantors() {
         guarantorsList.innerHTML = guarantors.map(g => {
             const label = g.isRequester
-                ? '<span class="text-sm font-medium truncate block">' + g.name + ' <span class="text-xs text-primary font-normal">(' + i18n.you + ')</span></span>'
-                : '<span class="text-sm font-medium truncate block">' + g.name + '</span>';
+                ? '<span class="text-sm font-medium">' + g.name + ' <span class="text-xs text-gf-blue font-normal">(' + i18n.you + ')</span></span>'
+                : '<span class="text-sm font-medium">' + g.name + '</span>';
 
             const removeBtn = g.isRequester ? '' :
                 '<button type="button" data-remove="' + g.account_id + '"' +
-                    ' class="text-red-400 hover:text-red-600 p-1 shrink-0" title="' + i18n.remove + '">' +
+                    ' class="text-gf-red hover:opacity-70 p-1 shrink-0" title="' + i18n.remove + '">' +
                     '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
                     '</svg>' +
                 '</button>';
 
-            const borderClass = g.isRequester ? 'border-primary/30 bg-primary-container/20' : 'border-slate-200 bg-white';
+            const borderClass = g.isRequester ? 'border-gf-blue/20 bg-gf-blue-bg/40' : 'border-gf-border bg-white';
 
-            return '<div class="flex items-center gap-2 rounded-lg border ' + borderClass + ' px-3 py-2">' +
+            return '<div class="flex items-center gap-2 rounded border ' + borderClass + ' px-3 py-2">' +
                 '<div class="flex-1 min-w-0">' +
                     label +
-                    '<span class="text-xs text-gray-400">' + i18n.available + ': ' + formatCOP(g.available) + '</span>' +
+                    '<div class="text-xs text-gf-text-3">' + i18n.available + ': ' + formatCOP(g.available) + '</div>' +
                 '</div>' +
                 '<input type="number" step="0.01" min="0" max="' + g.available + '"' +
                     ' placeholder="' + i18n.amount_placeholder + '"' +
                     ' value="' + (g.amount || '') + '"' +
                     ' data-id="' + g.account_id + '"' +
-                    ' class="guarantor-amount w-28 border rounded-lg px-2 py-1.5 text-sm text-right">' +
+                    ' class="guarantor-amount w-28 gf-input text-right text-sm">' +
                 removeBtn +
             '</div>';
         }).join('');
@@ -279,7 +268,6 @@
         const totalAmount = parseFloat(amountInput.value) || 0;
 
         summaryEl.classList.remove('hidden');
-
         document.getElementById('summary-total').textContent = formatCOP(totalAmount);
 
         const summaryGuarantors = document.getElementById('summary-guarantors');
@@ -288,7 +276,7 @@
             coveredByPeople += g.amount;
             const pct = totalAmount > 0 ? ((g.amount / totalAmount) * 100).toFixed(1) : '0.0';
             const nameLabel = g.isRequester ? g.name + ' (' + i18n.you + ')' : g.name;
-            return '<div class="flex justify-between text-slate-500">' +
+            return '<div class="flex justify-between text-gf-text-2">' +
                 '<span>' + nameLabel + '</span>' +
                 '<span>' + formatCOP(g.amount) + ' <span class="text-xs">(' + pct + '%)</span></span>' +
                 '</div>';
@@ -311,7 +299,6 @@
 
     amountInput.addEventListener('input', updateSummary);
 
-    // Submit
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         const data = {
@@ -341,11 +328,11 @@
         const result = document.getElementById('result');
         if (res.ok) {
             const loan = await res.json();
-            result.innerHTML = '<div class="rounded-xl border border-primary/25 bg-primary-container px-4 py-3 text-primary-on-container shadow-md1">' +
-                i18n.ok + ' <a href="/loans/' + loan.id + '" class="font-medium underline">' + i18n.link + '</a></div>';
+            result.innerHTML = '<div class="p-3 text-sm rounded" style="background:var(--gf-green-bg);color:var(--gf-green)">' +
+                i18n.ok + ' <a href="/loans/' + loan.id + '" class="gf-link font-medium">' + i18n.link + '</a></div>';
         } else {
             const err = await res.json();
-            result.innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">' +
+            result.innerHTML = '<div class="p-3 text-sm rounded" style="background:var(--gf-red-bg);color:var(--gf-red)">' +
                 (err.detail || i18n.err) + '</div>';
         }
     });

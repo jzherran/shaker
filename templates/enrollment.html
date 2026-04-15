@@ -3,45 +3,32 @@
 
 {% block content %}
 <div class="max-w-md mx-auto">
-    <div class="md-card rounded-xl p-6">
-        <h2 class="text-2xl font-medium text-slate-900 mb-4">{{ t('enrollment.title') }}</h2>
-        <p class="text-slate-600 mb-6">
-            {{ t('enrollment.intro') }}
-        </p>
+    <div class="gf-card p-6">
+        <h2 class="gf-page-title mb-4">{{ t('enrollment.title') }}</h2>
+        <p class="text-sm text-gf-text-2 mb-6">{{ t('enrollment.intro') }}</p>
 
         {% if merge_pending %}
-        <div class="mb-6 rounded-xl border border-primary/20 bg-primary-container px-4 py-3 text-primary-on-container shadow-md1">
+        <div class="mb-6 rounded p-4 text-sm" style="background:var(--gf-blue-bg);color:var(--gf-blue-text)">
             <p class="font-medium">{{ t('enrollment.merge_title') }}</p>
-            <p class="mt-1 text-sm opacity-90">
-                {{ t('enrollment.merge_body') }}
-            </p>
+            <p class="mt-1 opacity-90">{{ t('enrollment.merge_body') }}</p>
         </div>
         {% endif %}
 
         {% if error %}
-        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            {{ error }}
-        </div>
+        <div class="mb-6 rounded p-3 text-sm" style="background:var(--gf-red-bg);color:var(--gf-red)">{{ error }}</div>
         {% endif %}
 
         {% if not merge_pending %}
         <form method="POST" action="/enrollment">
-            <div class="mb-4">
-                <label for="national_id" class="mb-1 block text-sm font-medium text-slate-700">
-                    {{ t('enrollment.national_id') }}
-                </label>
+            <div class="mb-5">
+                <label for="national_id" class="gf-label">{{ t('enrollment.national_id') }}</label>
                 <input type="text" name="national_id" id="national_id"
                        required minlength="5" maxlength="30"
                        placeholder="{{ t('enrollment.placeholder_id') }}"
-                       class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary/30">
-                <p class="mt-1 text-xs text-slate-500">
-                    {{ t('enrollment.hint') }}
-                </p>
+                       class="gf-input">
+                <p class="mt-1 text-xs text-gf-text-3">{{ t('enrollment.hint') }}</p>
             </div>
-            <button type="submit"
-                    class="w-full rounded-full bg-primary py-2.5 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark">
-                {{ t('enrollment.submit') }}
-            </button>
+            <button type="submit" class="gf-btn gf-btn-primary w-full py-2.5">{{ t('enrollment.submit') }}</button>
         </form>
         {% endif %}
     </div>

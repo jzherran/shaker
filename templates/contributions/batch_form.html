@@ -3,79 +3,75 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="/contributions" class="text-sm font-medium text-primary hover:underline">&larr; {{ t('contributions.back') }}</a>
-    <h1 class="text-2xl font-medium text-slate-900 mt-2">{{ t('contributions.batch_title') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ t('contributions.batch_sub') }}</p>
+    <a href="/contributions" class="gf-link text-sm">&larr; {{ t('contributions.back') }}</a>
+    <h1 class="gf-page-title mt-2">{{ t('contributions.batch_title') }}</h1>
+    <p class="text-sm text-gf-text-2 mt-1">{{ t('contributions.batch_sub') }}</p>
 </div>
 
-<div class="md-card rounded-xl p-6">
+<div class="gf-card p-6">
     <form hx-post="/api/contributions/batch/htmx" hx-target="#batch-result" hx-swap="innerHTML">
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 pb-6 border-b">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 pb-6 border-b border-gf-border">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.type') }}</label>
-                <select name="contribution_type" class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="gf-label">{{ t('contributions.type') }}</label>
+                <select name="contribution_type" class="gf-select">
                     <option value="regular">{{ t('contributions.types.regular') }}</option>
                     <option value="extraordinary">{{ t('contributions.types.extraordinary') }}</option>
                     <option value="initial">{{ t('contributions.types.initial') }}</option>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.year') }}</label>
-                <input type="number" name="period_year" value="2026" required
-                    class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="gf-label">{{ t('contributions.year') }}</label>
+                <input type="number" name="period_year" value="2026" required class="gf-input">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.month') }}</label>
-                <input type="number" name="period_month" min="1" max="12" required
-                    class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1-12">
+                <label class="gf-label">{{ t('contributions.month') }}</label>
+                <input type="number" name="period_month" min="1" max="12" required class="gf-input" placeholder="1-12">
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.description') }}</label>
-                <input type="text" name="description" class="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="{{ t('contributions.monthly_placeholder') }}">
+                <label class="gf-label">{{ t('contributions.description') }}</label>
+                <input type="text" name="description" class="gf-input" placeholder="{{ t('contributions.monthly_placeholder') }}">
             </div>
         </div>
 
         <div class="mb-4">
-            <label class="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                <input type="checkbox" id="select-all" class="rounded border-gray-300">
+            <label class="flex items-center gap-2 text-sm font-medium text-gf-text-2 cursor-pointer">
+                <input type="checkbox" id="select-all" class="rounded border-gf-border-s">
                 <span>{{ t('contributions.select_all') }}</span>
             </label>
         </div>
 
         {% if not users_accounts %}
-        <div class="py-8 text-center text-slate-500">{{ t('contributions.batch_empty_accounts') }}</div>
+        <div class="gf-empty">{{ t('contributions.batch_empty_accounts') }}</div>
         {% else %}
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-slate-50/80">
-                    <tr class="text-left text-slate-600">
-                        <th class="px-4 py-3 w-10"></th>
-                        <th class="px-4 py-3">{{ t('contributions.member') }}</th>
-                        <th class="px-4 py-3">{{ t('loans.account') }}</th>
-                        <th class="px-4 py-3 text-right">{{ t('accounts.balance') }}</th>
-                        <th class="px-4 py-3">{{ t('contributions.amount') }}</th>
+            <table class="gf-table">
+                <thead>
+                    <tr>
+                        <th class="w-10"></th>
+                        <th>{{ t('contributions.member') }}</th>
+                        <th>{{ t('loans.account') }}</th>
+                        <th class="text-right">{{ t('accounts.balance') }}</th>
+                        <th>{{ t('contributions.amount') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for ua in users_accounts %}
-                    <tr class="border-t border-slate-100 hover:bg-primary-container/25">
-                        <td class="px-4 py-3">
+                    <tr>
+                        <td>
                             <input type="checkbox" name="selected_accounts" value="{{ ua.account_id }}"
-                                   class="member-checkbox rounded border-gray-300">
+                                   class="member-checkbox rounded border-gf-border-s">
                         </td>
-                        <td class="px-4 py-3">
+                        <td>
                             <div class="font-medium">{{ ua.full_name }}</div>
-                            <div class="text-xs text-gray-500">{{ ua.email }}</div>
+                            <div class="text-xs text-gf-text-3">{{ ua.email }}</div>
                         </td>
-                        <td class="px-4 py-3 font-mono text-gray-600">{{ ua.account_number }}</td>
-                        <td class="px-4 py-3 text-right font-medium text-primary-dark">{{ ua.balance|cop }}</td>
-                        <td class="px-4 py-3">
+                        <td class="font-mono text-gf-text-2 text-sm">{{ ua.account_number }}</td>
+                        <td class="text-right font-medium">{{ ua.balance|cop }}</td>
+                        <td>
                             <input type="number" name="amount_{{ ua.account_id }}"
                                    value="{{ ua.default_amount or '' }}"
-                                   step="0.01" min="0.01"
-                                   placeholder="0.00"
-                                   class="border rounded px-2 py-1 text-sm w-28">
+                                   step="0.01" min="0.01" placeholder="0.00"
+                                   class="gf-input" style="width: 120px;">
                         </td>
                     </tr>
                     {% endfor %}
@@ -85,10 +81,7 @@
         {% endif %}
 
         <div class="mt-6">
-            <button type="submit"
-                class="rounded-full bg-primary px-6 py-3 text-sm font-medium text-white shadow-md2 transition hover:bg-primary-dark">
-                {{ t('contributions.record_all') }}
-            </button>
+            <button type="submit" class="gf-btn gf-btn-primary">{{ t('contributions.record_all') }}</button>
         </div>
     </form>
 
@@ -97,9 +90,7 @@
 
 <script>
 document.getElementById('select-all').addEventListener('change', function() {
-    document.querySelectorAll('.member-checkbox').forEach(cb => {
-        cb.checked = this.checked;
-    });
+    document.querySelectorAll('.member-checkbox').forEach(cb => { cb.checked = this.checked; });
 });
 </script>
 {% endblock %}

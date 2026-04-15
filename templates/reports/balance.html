@@ -2,40 +2,48 @@
 {% block title %}{{ t('meta.reports_balance') }}{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-medium text-slate-900 mb-6">{{ t('reports.balance_title') }}</h1>
+<h1 class="gf-page-title mb-6">{{ t('reports.balance_title') }}</h1>
 
-<div class="md-card p-6 mb-6 rounded-xl">
+<div class="gf-card p-5 mb-6">
     <form id="report-form" class="flex flex-wrap gap-4 items-end">
         <div>
-            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.account') }}</label>
-            <select id="account_id" class="border rounded px-3 py-2 text-sm">
+            <label class="gf-label">{{ t('reports.account') }}</label>
+            <select id="account_id" class="gf-select" style="width: auto; min-width: 200px;">
                 {% for a in accounts %}
                 <option value="{{ a.id }}">{{ a.owner_name or a.account_number }}</option>
                 {% endfor %}
             </select>
         </div>
         <div>
-            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.type') }}</label>
-            <select id="snapshot_type" class="border rounded px-3 py-2 text-sm">
+            <label class="gf-label">{{ t('reports.type') }}</label>
+            <select id="snapshot_type" class="gf-select" style="width: auto;">
                 <option value="daily">{{ t('reports.daily') }}</option>
                 <option value="monthly" selected>{{ t('reports.monthly') }}</option>
                 <option value="yearly">{{ t('reports.yearly') }}</option>
             </select>
         </div>
         <div>
-            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.from') }}</label>
-            <input type="date" id="date_from" class="border rounded px-3 py-2 text-sm">
+            <label class="gf-label">{{ t('reports.from') }}</label>
+            <input type="date" id="date_from" class="gf-input" style="width: auto;">
         </div>
         <div>
-            <label class="block text-xs text-gray-500 mb-1">{{ t('reports.to') }}</label>
-            <input type="date" id="date_to" class="border rounded px-3 py-2 text-sm">
+            <label class="gf-label">{{ t('reports.to') }}</label>
+            <input type="date" id="date_to" class="gf-input" style="width: auto;">
         </div>
-        <button type="submit" class="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-md1 hover:bg-primary-dark transition">{{ t('reports.load') }}</button>
+        <button type="submit" class="gf-btn gf-btn-primary">{{ t('reports.load') }}</button>
     </form>
 </div>
 
-<div id="report-data" class="md-card overflow-hidden rounded-xl">
-    <p class="px-6 py-8 text-center text-slate-500">{{ t('reports.hint') }}</p>
+{# ── Chart ── #}
+<div id="chart-container" class="gf-card p-5 mb-6 hidden">
+    <div class="gf-chart-container">
+        <canvas id="balance-chart"></canvas>
+    </div>
+</div>
+
+{# ── Table ── #}
+<div id="report-data" class="gf-card overflow-hidden">
+    <p class="gf-empty">{{ t('reports.hint') }}</p>
 </div>
 
 <script>
@@ -48,6 +56,9 @@
         colDisb: {{ t('reports.col_disbursements')|tojson }},
         colPay: {{ t('reports.col_payments')|tojson }},
     };
+
+    let balanceChart = null;
+
     document.getElementById('report-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const params = new URLSearchParams({
@@ -61,30 +72,83 @@
 
         const res = await fetch('/api/reports/balance?' + params);
         const container = document.getElementById('report-data');
+        const chartContainer = document.getElementById('chart-container');
 
         if (!res.ok) {
-            container.innerHTML = '<p class="px-6 py-8 text-center text-red-500">' + RB.err + '</p>';
+            chartContainer.classList.add('hidden');
+            container.innerHTML = '<p class="gf-empty" style="color:var(--gf-red)">' + RB.err + '</p>';
             return;
         }
 
         const data = await res.json();
         if (!data.length) {
-            container.innerHTML = '<p class="px-6 py-8 text-center text-slate-500">' + RB.empty + '</p>';
+            chartContainer.classList.add('hidden');
+            container.innerHTML = '<p class="gf-empty">' + RB.empty + '</p>';
             return;
         }
 
-        let html = '<table class="w-full text-sm"><thead class="bg-slate-50/80"><tr class="text-left text-slate-600">';
-        html += '<th class="px-6 py-3">' + RB.colDate + '</th><th class="px-6 py-3">' + RB.colBalance + '</th>';
-        html += '<th class="px-6 py-3">' + RB.colContrib + '</th><th class="px-6 py-3">' + RB.colDisb + '</th>';
-        html += '<th class="px-6 py-3">' + RB.colPay + '</th></tr></thead><tbody>';
+        // Chart
+        chartContainer.classList.remove('hidden');
+        const labels = data.map(s => s.snapshot_date);
+        const balances = data.map(s => s.balance);
+        const contributions = data.map(s => s.total_contributions);
+
+        if (balanceChart) balanceChart.destroy();
+        balanceChart = new Chart(document.getElementById('balance-chart'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: RB.colBalance,
+                        data: balances,
+                        borderColor: '#1a73e8',
+                        backgroundColor: 'rgba(26,115,232,0.08)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#1a73e8',
+                    },
+                    {
+                        label: RB.colContrib,
+                        data: contributions,
+                        borderColor: '#137333',
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 3],
+                        tension: 0.3,
+                        pointRadius: 2,
+                        pointBackgroundColor: '#137333',
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: 12, family: 'Inter' }, color: '#5f6368', usePointStyle: true, pointStyle: 'circle' } },
+                    tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatCOP(ctx.raw) } },
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#80868b' } },
+                    y: { grid: { color: '#e8eaed' }, ticks: { font: { size: 11 }, color: '#80868b', callback: v => formatCOP(v) } },
+                },
+            },
+        });
+
+        // Table
+        let html = '<table class="gf-table"><thead><tr>';
+        html += '<th>' + RB.colDate + '</th><th>' + RB.colBalance + '</th>';
+        html += '<th>' + RB.colContrib + '</th><th>' + RB.colDisb + '</th>';
+        html += '<th>' + RB.colPay + '</th></tr></thead><tbody>';
 
         data.forEach(s => {
-            html += '<tr class="border-t border-slate-100">';
-            html += '<td class="px-6 py-3">' + s.snapshot_date + '</td>';
-            html += '<td class="px-6 py-3 font-medium text-primary-dark">' + formatCOP(s.balance) + '</td>';
-            html += '<td class="px-6 py-3 text-primary">' + formatCOP(s.total_contributions) + '</td>';
-            html += '<td class="px-6 py-3 text-amber-700">' + formatCOP(s.total_loan_disbursements) + '</td>';
-            html += '<td class="px-6 py-3 text-sky-700">' + formatCOP(s.total_loan_payments) + '</td>';
+            html += '<tr>';
+            html += '<td class="text-gf-text-2">' + s.snapshot_date + '</td>';
+            html += '<td class="font-medium">' + formatCOP(s.balance) + '</td>';
+            html += '<td class="gf-positive">' + formatCOP(s.total_contributions) + '</td>';
+            html += '<td style="color:var(--gf-amber)">' + formatCOP(s.total_loan_disbursements) + '</td>';
+            html += '<td class="text-gf-blue">' + formatCOP(s.total_loan_payments) + '</td>';
             html += '</tr>';
         });
 

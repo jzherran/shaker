@@ -3,23 +3,23 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="/contributions" class="text-sm font-medium text-primary hover:underline">&larr; {{ t('contributions.back') }}</a>
-    <h1 class="text-2xl font-medium text-slate-900 mt-2">{{ t('contributions.record_new') }}</h1>
+    <a href="/contributions" class="gf-link text-sm">&larr; {{ t('contributions.back') }}</a>
+    <h1 class="gf-page-title mt-2">{{ t('contributions.record_new') }}</h1>
     {% if is_admin %}
-    <p class="text-sm text-slate-600 mt-1">
+    <p class="text-sm text-gf-text-2 mt-1">
         {{ t('contributions.single_hint') }}
-        <a href="/contributions/batch" class="font-medium text-primary hover:underline">{{ t('contributions.batch_link') }}</a> {{ t('contributions.batch_hint') }}
+        <a href="/contributions/batch" class="gf-link">{{ t('contributions.batch_link') }}</a> {{ t('contributions.batch_hint') }}
     </p>
     {% endif %}
 </div>
 
-<div class="md-card max-w-lg rounded-xl p-6">
+<div class="gf-card max-w-lg p-6">
     <form hx-post="/api/contributions/htmx" hx-target="#result" hx-swap="innerHTML">
-        <div class="space-y-4">
+        <div class="space-y-5">
             {% if is_admin %}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
-                <select name="account_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="gf-label">{{ t('loans.account') }}</label>
+                <select name="account_id" required class="gf-select">
                     <option value="">{{ t('contributions.select_account') }}</option>
                     {% for a in accounts %}
                     <option value="{{ a.id }}">{{ a.owner_name or a.account_number }} ({{ t('contributions.balance_label', amount=a.balance|cop) }})</option>
@@ -28,24 +28,23 @@
             </div>
             {% else %}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('loans.account') }}</label>
-                <span class="block text-gray-600 bg-gray-50 px-3 py-2 rounded-md border border-gray-200 text-sm">
+                <label class="gf-label">{{ t('loans.account') }}</label>
+                <div class="px-3 py-2.5 bg-gf-surface border border-gf-border rounded text-sm text-gf-text-2">
                     {{ account.owner_name or account.account_number }} ({{ t('contributions.balance_label', amount=account.balance|cop) }})
-                </span>
+                </div>
                 <input type="hidden" name="account_id" value="{{ account.id }}">
             </div>
             {% endif %}
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.amount') }}</label>
+                <label class="gf-label">{{ t('contributions.amount') }}</label>
                 <input type="number" name="amount" step="0.01" min="0.01" required
-                    value="{{ default_amount or '' }}"
-                    class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00">
+                    value="{{ default_amount or '' }}" class="gf-input" placeholder="0.00">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.type') }}</label>
-                <select name="contribution_type" class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="gf-label">{{ t('contributions.type') }}</label>
+                <select name="contribution_type" class="gf-select">
                     <option value="regular">{{ t('contributions.types.regular') }}</option>
                     <option value="extraordinary">{{ t('contributions.types.extraordinary') }}</option>
                     <option value="initial">{{ t('contributions.types.initial') }}</option>
@@ -54,33 +53,26 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.year') }}</label>
-                    <input type="number" name="period_year" value="2026" required
-                        class="w-full border rounded-lg px-3 py-2 text-sm">
+                    <label class="gf-label">{{ t('contributions.year') }}</label>
+                    <input type="number" name="period_year" value="2026" required class="gf-input">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.month_label') }}</label>
-                    <input type="number" name="period_month" min="1" max="12" required
-                        class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1-12">
+                    <label class="gf-label">{{ t('contributions.month_label') }}</label>
+                    <input type="number" name="period_month" min="1" max="12" required class="gf-input" placeholder="1-12">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.description') }}</label>
-                <input type="text" name="description" class="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="{{ t('contributions.monthly_placeholder') }}">
+                <label class="gf-label">{{ t('contributions.description') }}</label>
+                <input type="text" name="description" class="gf-input" placeholder="{{ t('contributions.monthly_placeholder') }}">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('contributions.receipt_ref') }}</label>
-                <input type="text" name="receipt_reference" class="w-full border rounded-lg px-3 py-2 text-sm"
-                    placeholder="{{ t('contributions.optional') }}">
+                <label class="gf-label">{{ t('contributions.receipt_ref') }}</label>
+                <input type="text" name="receipt_reference" class="gf-input" placeholder="{{ t('contributions.optional') }}">
             </div>
 
-            <button type="submit"
-                class="w-full rounded-full bg-primary py-3 text-sm font-medium text-white shadow-md2 hover:bg-primary-dark transition">
-                {{ t('contributions.record') }}
-            </button>
+            <button type="submit" class="gf-btn gf-btn-primary w-full py-2.5">{{ t('contributions.record') }}</button>
         </div>
     </form>
 

@@ -3,22 +3,19 @@
 
 {% block content %}
 <div class="max-w-md mx-auto">
-    <div class="md-card rounded-xl p-6 text-center">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <svg class="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="gf-card p-6 text-center">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full" style="background: var(--gf-amber-bg);">
+            <svg class="h-7 w-7" style="color: var(--gf-amber);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
         </div>
-        <h2 class="text-2xl font-medium text-slate-900 mb-2">{{ t('pending_approval.title') }}</h2>
-        <p class="text-slate-600 mb-6">{{ t('pending_approval.body') }}</p>
-        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <h2 class="gf-page-title mb-2">{{ t('pending_approval.title') }}</h2>
+        <p class="text-sm text-gf-text-2 mb-6">{{ t('pending_approval.body') }}</p>
+        <div class="rounded p-3 text-sm" style="background: var(--gf-amber-bg); color: var(--gf-amber);">
             {{ t('pending_approval.hint') }}
         </div>
-        <a href="/auth/logout"
-           class="mt-6 inline-block rounded-full bg-slate-200 px-6 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-300">
-            {{ t('nav.logout') }}
-        </a>
+        <a href="/auth/logout" class="mt-6 inline-block gf-btn gf-btn-outline">{{ t('nav.logout') }}</a>
     </div>
 </div>
 {% endblock %}

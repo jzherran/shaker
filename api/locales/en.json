@@ -28,7 +28,10 @@
     "merges": "Merges",
     "pending_users": "Pending",
     "logout": "Logout",
-    "admin": "Admin"
+    "admin": "Admin",
+    "view_as_user": "View as user",
+    "user_view": "User view",
+    "back_to_admin": "Back to admin"
   },
   "footer": {
     "copyright": "Shaker - FONAFAHE © 2026",

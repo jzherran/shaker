@@ -200,12 +200,16 @@ async def get_merged_users(db: Client) -> list[User]:
 
 
 async def get_active_users_with_accounts(db: Client) -> list[dict]:
-    """Get all active users with their account info and default amounts."""
+    """Get all active users with their account info and default amounts.
+
+    Excludes merged-away users (is_active=false); only the surviving identity
+    should appear after an identity merge.
+    """
     result = (
         db.table("accounts")
         .select(
             "id, account_number, balance, user_id, "
-            "users(id, full_name, email, default_contribution_amount)"
+            "users(id, full_name, email, default_contribution_amount, is_active)"
         )
         .eq("status", "active")
         .order("account_number")
@@ -215,6 +219,8 @@ async def get_active_users_with_accounts(db: Client) -> list[dict]:
     users_accounts = []
     for row in result.data:
         user_data = row.get("users") or {}
+        if not user_data.get("is_active", True):
+            continue
         users_accounts.append(
             {
                 "account_id": row["id"],

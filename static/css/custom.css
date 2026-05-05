@@ -434,3 +434,19 @@ body {
 /* ── Scrollbar ── */
 .gf-sidebar::-webkit-scrollbar { width: 4px; }
 .gf-sidebar::-webkit-scrollbar-thumb { background: var(--gf-border-strong); border-radius: 4px; }
+
+/* ── View-as-user toggle ── */
+.gf-badge-toggle {
+    background: var(--gf-amber-bg);
+    color: var(--gf-amber);
+    border: 0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.gf-badge-toggle:hover { filter: brightness(0.96); }
+.gf-badge-toggle.is-user-mode {
+    background: var(--gf-blue-bg);
+    color: var(--gf-blue-text);
+}
+
+body.gf-view-as-user .gf-admin-only { display: none !important; }

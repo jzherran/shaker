@@ -7,7 +7,7 @@
 </div>
 
 {% if is_admin %}
-<div class="flex flex-wrap gap-2 mb-6">
+<div class="flex flex-wrap gap-2 mb-6 gf-admin-only">
     <a href="/accounts" class="gf-chip {% if not filter_status %}active{% endif %}">{{ t('accounts.filter_all') }}</a>
     <a href="/accounts?status=active" class="gf-chip {% if filter_status == 'active' %}active{% endif %}">{{ t('accounts.filter_active') }}</a>
     <a href="/accounts?status=pending" class="gf-chip {% if filter_status == 'pending' %}active{% endif %}">{{ t('accounts.filter_pending') }}</a>
@@ -55,7 +55,7 @@
             {# ── Pending users ── #}
             {% if has_pending %}
             {% for pu in pending_users %}
-            <tr class="cursor-pointer" onclick="document.getElementById('panel-pu-{{ pu.id }}').classList.toggle('hidden')">
+            <tr class="cursor-pointer gf-admin-only" onclick="document.getElementById('panel-pu-{{ pu.id }}').classList.toggle('hidden')">
                 <td class="font-medium">
                     {{ pu.full_name }}
                     <span class="text-xs text-gf-text-3 ml-1">{{ pu.email }}</span>
@@ -67,7 +67,7 @@
                     <svg class="inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </td>
             </tr>
-            <tr id="panel-pu-{{ pu.id }}" class="hidden">
+            <tr id="panel-pu-{{ pu.id }}" class="hidden gf-admin-only">
                 <td colspan="5" class="gf-expand-panel px-4 py-4">
                     <div class="flex items-center justify-between">
                         <div class="text-sm">
@@ -93,7 +93,7 @@
             {# ── Merge requests ── #}
             {% if has_merges %}
             {% for mr in merge_requests %}
-            <tr class="cursor-pointer" onclick="document.getElementById('panel-mr-{{ mr.id }}').classList.toggle('hidden')">
+            <tr class="cursor-pointer gf-admin-only" onclick="document.getElementById('panel-mr-{{ mr.id }}').classList.toggle('hidden')">
                 <td class="font-medium">
                     {{ mr.requesting_user_name }}
                     <span class="text-xs text-gf-text-3 ml-1">{{ mr.requesting_user_email }}</span>
@@ -105,7 +105,7 @@
                     <svg class="inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </td>
             </tr>
-            <tr id="panel-mr-{{ mr.id }}" class="hidden">
+            <tr id="panel-mr-{{ mr.id }}" class="hidden gf-admin-only">
                 <td colspan="5" class="gf-expand-panel px-4 py-4">
                     <div class="flex items-center justify-between">
                         <div class="text-sm space-y-1">
@@ -132,7 +132,7 @@
             {# ── Merged users ── #}
             {% if has_merged %}
             {% for mu in merged_users %}
-            <tr>
+            <tr class="gf-admin-only">
                 <td class="text-gf-text-3">{{ mu.full_name }}</td>
                 <td class="text-gf-text-3">&mdash;</td>
                 <td><span class="gf-badge gf-badge-grey">{{ t('accounts.status_merged') }}</span></td>

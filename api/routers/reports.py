@@ -16,7 +16,7 @@ async def balance_report_page(request: Request, user: User = Depends(get_current
     db = get_db()
     accounts = []
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db)
+        accounts = await account_service.get_all_accounts(db, status="active", active_owner=True)
     else:
         account = await account_service.get_account_by_user(db, user.id)
         if account:

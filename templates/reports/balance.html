@@ -10,7 +10,7 @@
             <label class="gf-label">{{ t('reports.account') }}</label>
             <select id="account_id" class="gf-select" style="width: auto; min-width: 200px;">
                 {% for a in accounts %}
-                <option value="{{ a.id }}">{{ a.owner_name or a.account_number }}</option>
+                <option value="{{ a.id }}"{% if is_admin and a.user_id != user.id %} class="gf-admin-only"{% endif %}>{{ a.owner_name or a.account_number }}</option>
                 {% endfor %}
             </select>
         </div>

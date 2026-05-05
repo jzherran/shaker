@@ -49,13 +49,28 @@ async def get_account_by_user(db: Client, user_id: str) -> Account | None:
     return _account_from_row(result.data[0])
 
 
-async def get_all_accounts(db: Client, status: str = None) -> list[Account]:
-    query = db.table("accounts").select("*, users(full_name)")
+async def get_all_accounts(
+    db: Client, status: str = None, active_owner: bool = False
+) -> list[Account]:
+    """List accounts with optional status filter.
+
+    When active_owner is True, exclude accounts whose user has is_active=false
+    (e.g. identity-merge duplicates); use for member/account dropdowns.
+    """
+    user_cols = "full_name, is_active" if active_owner else "full_name"
+    query = db.table("accounts").select(f"*, users({user_cols})")
     if status and status in ("active", "inactive", "suspended"):
         query = query.eq("status", status)
     query = query.order("created_at")
     result = query.execute()
-    return [_account_from_row(row) for row in result.data]
+    out: list[Account] = []
+    for row in result.data:
+        if active_owner:
+            user_data = row.get("users") or {}
+            if not user_data.get("is_active", True):
+                continue
+        out.append(_account_from_row(dict(row)))
+    return out
 
 
 async def require_active_account(db: Client, account_id: str) -> Account:

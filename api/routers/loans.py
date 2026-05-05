@@ -20,7 +20,7 @@ async def search_members(
     db = get_db()
     query = (
         db.table("accounts")
-        .select("id, account_number, balance, user_id, users(full_name)")
+        .select("id, account_number, balance, user_id, users(full_name, is_active)")
         .eq("status", "active")
         .order("account_number")
     )
@@ -32,6 +32,8 @@ async def search_members(
         if exclude_account and row["id"] == exclude_account:
             continue
         user_data = row.get("users") or {}
+        if not user_data.get("is_active", True):
+            continue
         name = user_data.get("full_name", "")
         if q_lower and q_lower not in name.lower() and q_lower not in row["account_number"].lower():
             continue
@@ -81,7 +83,7 @@ async def loan_request_form(request: Request, user: User = Depends(get_current_u
     accounts = []
     available_balance = 0.0
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db, status="active")
+        accounts = await account_service.get_all_accounts(db, status="active", active_owner=True)
     if account:
         available_balance = await loan_service.get_available_balance(db, account.id)
 

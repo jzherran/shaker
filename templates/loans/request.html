@@ -17,7 +17,7 @@
           data-requester-available="{{ available_balance }}">
         <div class="space-y-5">
             {% if is_admin and accounts %}
-            <div>
+            <div class="gf-admin-only">
                 <label class="gf-label">{{ t('loans.account') }}</label>
                 <select name="account_id" required class="gf-select">
                     {% for a in accounts %}

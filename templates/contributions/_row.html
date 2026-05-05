@@ -9,7 +9,7 @@
     <td class="text-gf-text-2">{{ c.description or '' }}</td>
     <td class="text-right font-medium">{{ c.amount|cop }}</td>
     {% if is_admin is defined and is_admin %}
-    <td>
+    <td class="gf-admin-only">
         <button hx-delete="/api/contributions/{{ c.id }}"
                 hx-confirm="{{ t('contributions.confirm_cancel') }}"
                 hx-target="#row-{{ c.id }}" hx-swap="outerHTML"

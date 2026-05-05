@@ -67,7 +67,7 @@
                 {{ t('nav.dashboard') }}
             </a>
 
-            <a href="/accounts" class="gf-nav-item {% if '/accounts' in current_path %}active{% endif %}">
+            <a href="/accounts" class="gf-nav-item gf-admin-only {% if '/accounts' in current_path %}active{% endif %}">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
                 </svg>
@@ -97,7 +97,7 @@
                 {{ t('nav.reports') }}
             </a>
 
-            <a href="/reports/fund" class="gf-nav-item {% if '/reports/fund' in current_path %}active{% endif %}">
+            <a href="/reports/fund" class="gf-nav-item gf-admin-only {% if '/reports/fund' in current_path %}active{% endif %}">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"/>
                 </svg>
@@ -126,7 +126,15 @@
 
             <div class="flex items-center gap-4">
                 {% if is_admin %}
-                <span class="gf-badge gf-badge-amber text-xs">{{ t('nav.admin') }}</span>
+                <button type="button" id="view-mode-toggle" class="gf-badge gf-badge-toggle text-xs"
+                        aria-pressed="false"
+                        data-label-admin="{{ t('nav.admin') }} · {{ t('nav.view_as_user') }}"
+                        data-label-user="{{ t('nav.user_view') }} · {{ t('nav.back_to_admin') }}">
+                    <span class="gf-toggle-text"></span>
+                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-3-3m0 0l3-3m-3 3h12m0 0l-3 3m3-3l-3-3"/>
+                    </svg>
+                </button>
                 {% endif %}
                 <span class="text-sm text-gf-text-2">{{ user.full_name }}</span>
                 <a href="/auth/logout" class="text-sm text-gf-text-3 hover:text-gf-text transition">{{ t('nav.logout') }}</a>
@@ -148,6 +156,48 @@
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('sidebar-overlay').classList.toggle('open');
         }
+
+        (function () {
+            var KEY = 'shaker.viewAsUser';
+            function syncSelects(active) {
+                if (!active) return;
+                document.querySelectorAll('select').forEach(function (sel) {
+                    var current = sel.options[sel.selectedIndex];
+                    if (!current || !current.classList.contains('gf-admin-only')) return;
+                    for (var i = 0; i < sel.options.length; i++) {
+                        if (!sel.options[i].classList.contains('gf-admin-only')) {
+                            sel.selectedIndex = i;
+                            sel.dispatchEvent(new Event('change', { bubbles: true }));
+                            break;
+                        }
+                    }
+                });
+            }
+            function apply(active) {
+                document.body.classList.toggle('gf-view-as-user', active);
+                var btn = document.getElementById('view-mode-toggle');
+                if (btn) {
+                    var label = btn.querySelector('.gf-toggle-text');
+                    if (label) {
+                        label.textContent = active ? btn.dataset.labelUser : btn.dataset.labelAdmin;
+                    }
+                    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    btn.classList.toggle('is-user-mode', active);
+                }
+                syncSelects(active);
+            }
+            apply(localStorage.getItem(KEY) === '1');
+            document.addEventListener('DOMContentLoaded', function () {
+                var btn = document.getElementById('view-mode-toggle');
+                if (!btn) return;
+                apply(localStorage.getItem(KEY) === '1');
+                btn.addEventListener('click', function () {
+                    var next = !(localStorage.getItem(KEY) === '1');
+                    localStorage.setItem(KEY, next ? '1' : '0');
+                    window.location.assign('/dashboard');
+                });
+            });
+        })();
     </script>
     {% else %}
     <main>

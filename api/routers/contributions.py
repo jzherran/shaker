@@ -34,7 +34,7 @@ async def contributions_list(
     # Get accounts list for the filter dropdown (admin only)
     accounts = []
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db)
+        accounts = await account_service.get_all_accounts(db, status="active", active_owner=True)
 
     return templates.TemplateResponse(
         request,
@@ -56,7 +56,7 @@ async def contribution_form(request: Request, user: User = Depends(get_current_u
     db = get_db()
 
     if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db, status="active")
+        accounts = await account_service.get_all_accounts(db, status="active", active_owner=True)
         return templates.TemplateResponse(
             request,
             "contributions/form.html",

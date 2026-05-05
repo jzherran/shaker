@@ -28,7 +28,10 @@
     "merges": "Fusiones",
     "pending_users": "Pendientes",
     "logout": "Salir",
-    "admin": "Admin"
+    "admin": "Admin",
+    "view_as_user": "Ver como usuario",
+    "user_view": "Vista de usuario",
+    "back_to_admin": "Volver a admin"
   },
   "footer": {
     "copyright": "Shaker - FONAFAHE © 2026",

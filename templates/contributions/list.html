@@ -10,13 +10,13 @@
             {{ t('contributions.new') }}
         </a>
         {% if is_admin %}
-        <a href="/contributions/batch" class="gf-btn gf-btn-outline">{{ t('contributions.batch') }}</a>
+        <a href="/contributions/batch" class="gf-btn gf-btn-outline gf-admin-only">{{ t('contributions.batch') }}</a>
         {% endif %}
     </div>
 </div>
 
 {% if is_admin %}
-<div class="gf-card p-4 mb-6">
+<div class="gf-card p-4 mb-6 gf-admin-only">
     <form method="get" class="flex flex-wrap gap-4 items-end">
         <div>
             <label class="gf-label">{{ t('contributions.account_filter') }}</label>
@@ -49,7 +49,7 @@
                 <th>{{ t('dashboard.period') }}</th>
                 <th>{{ t('contributions.description') }}</th>
                 <th class="text-right">{{ t('dashboard.amount') }}</th>
-                {% if is_admin %}<th></th>{% endif %}
+                {% if is_admin %}<th class="gf-admin-only"></th>{% endif %}
             </tr>
         </thead>
         <tbody id="contribution-list">

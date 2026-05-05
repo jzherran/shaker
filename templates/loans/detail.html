@@ -62,7 +62,7 @@
 
 {# ── Admin actions ── #}
 {% if is_admin and loan.status == 'requested' %}
-<div class="gf-card p-5 mb-6" style="border-color: var(--gf-amber-bg); background: var(--gf-amber-bg);">
+<div class="gf-card p-5 mb-6 gf-admin-only" style="border-color: var(--gf-amber-bg); background: var(--gf-amber-bg);">
     <h2 class="gf-section-title">{{ t('loans.admin_actions') }}</h2>
     <div class="flex flex-wrap gap-3">
         <button onclick="approveLoan()" class="gf-btn gf-btn-primary">{{ t('loans.approve') }}</button>
@@ -73,7 +73,7 @@
 {% endif %}
 
 {% if is_admin and loan.status == 'approved' %}
-<div class="gf-card p-5 mb-6" style="border-color: var(--gf-blue-bg); background: var(--gf-blue-bg);">
+<div class="gf-card p-5 mb-6 gf-admin-only" style="border-color: var(--gf-blue-bg); background: var(--gf-blue-bg);">
     <button onclick="disburseLoan()" class="gf-btn gf-btn-primary">{{ t('loans.mark_disbursed') }}</button>
     <div id="admin-result" class="mt-3"></div>
 </div>

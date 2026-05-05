@@ -39,7 +39,7 @@
                 hx-post="/api/admin/snapshots/generate"
                 hx-swap="none"
                 hx-disabled-elt="this"
-                class="gf-btn gf-btn-primary"
+                class="gf-btn gf-btn-primary gf-admin-only"
                 data-gen-label="{{ t('reports.generating')|e }}"
                 hx-on::before-request="this.dataset.origLabel=this.textContent; this.textContent=this.dataset.genLabel;"
                 hx-on::after-request="this.textContent=this.dataset.origLabel;">

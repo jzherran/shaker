@@ -6,7 +6,7 @@
     <a href="/contributions" class="gf-link text-sm">&larr; {{ t('contributions.back') }}</a>
     <h1 class="gf-page-title mt-2">{{ t('contributions.record_new') }}</h1>
     {% if is_admin %}
-    <p class="text-sm text-gf-text-2 mt-1">
+    <p class="text-sm text-gf-text-2 mt-1 gf-admin-only">
         {{ t('contributions.single_hint') }}
         <a href="/contributions/batch" class="gf-link">{{ t('contributions.batch_link') }}</a> {{ t('contributions.batch_hint') }}
     </p>
@@ -17,7 +17,7 @@
     <form hx-post="/api/contributions/htmx" hx-target="#result" hx-swap="innerHTML">
         <div class="space-y-5">
             {% if is_admin %}
-            <div>
+            <div class="gf-admin-only">
                 <label class="gf-label">{{ t('loans.account') }}</label>
                 <select name="account_id" required class="gf-select">
                     <option value="">{{ t('contributions.select_account') }}</option>

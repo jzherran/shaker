@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#1a73e8">
+    <link rel="icon" href="/static/brand-mark.png" type="image/png" sizes="256x256">
+    <link rel="icon" href="/static/favicon.ico" sizes="any">
     <title>{{ t('meta.login') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +56,36 @@
                 <div id="debug-msg" class="mt-4 hidden rounded p-3 font-mono text-xs text-gf-text-3 bg-gf-surface border border-gf-border break-all"></div>
                 {% endif %}
             </div>
+
+            {% if app_env == 'development' and mock_users %}
+            <div class="gf-card p-6 mt-6 border-dashed border-2 border-amber-300">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-semibold uppercase tracking-wide">Dev only</span>
+                    <h2 class="text-sm font-medium text-gf-text">Developer Mock Login</h2>
+                </div>
+                <p class="text-xs text-gf-text-3 mb-4">
+                    Sign in as a seeded mock user. Run
+                    <code class="px-1 rounded bg-gf-surface">python -m scripts.seed_mock_history</code>
+                    first to create them.
+                </p>
+                <div class="flex flex-col gap-2">
+                    {% for mu in mock_users %}
+                    <button type="button"
+                        data-mock-email="{{ mu.email }}"
+                        class="mock-login-btn flex items-center justify-between rounded border border-gf-border-s bg-white px-3 py-2 text-sm hover:bg-gf-surface transition">
+                        <span class="flex items-center gap-2">
+                            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide
+                                {% if mu.role == 'admin' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ mu.role }}
+                            </span>
+                            <span class="font-medium">{{ mu.full_name }}</span>
+                        </span>
+                        <span class="text-xs text-gf-text-3">{{ mu.email }}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -99,6 +131,31 @@
                 if (error) { showError(L.err_oauth + error.message); showDebug('Error: ' + JSON.stringify(error)); }
                 else if (data?.url) { showDebug('Redirecting...'); window.location.href = data.url; }
             } catch (e) { showError(L.err_unexpected + e.message); showDebug(e.stack || e.toString()); }
+        });
+
+        document.querySelectorAll('.mock-login-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const email = btn.getAttribute('data-mock-email');
+                errorEl.classList.add('hidden');
+                btn.disabled = true;
+                try {
+                    const res = await fetch('/auth/mock-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email }),
+                    });
+                    if (!res.ok) {
+                        const detail = await res.text();
+                        showError('Mock login failed: ' + detail);
+                        btn.disabled = false;
+                        return;
+                    }
+                    window.location.href = '/dashboard';
+                } catch (e) {
+                    showError('Mock login error: ' + e.message);
+                    btn.disabled = false;
+                }
+            });
         });
     </script>
 </body>

@@ -70,7 +70,9 @@
         if (from) params.set('date_from', from);
         if (to) params.set('date_to', to);
 
-        const res = await fetch('/api/reports/balance?' + params);
+        const res = await fetch('/api/reports/balance?' + params, {
+            credentials: 'same-origin',
+        });
         const container = document.getElementById('report-data');
         const chartContainer = document.getElementById('chart-container');
 

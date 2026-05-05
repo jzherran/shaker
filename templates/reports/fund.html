@@ -35,11 +35,14 @@
     <div class="gf-card p-5">
         <p class="text-sm text-gf-text-2 mb-3">{{ t('reports.last_updated') }} {{ fund.last_updated[:19] if fund.last_updated is string else fund.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
         {% if is_admin %}
-        <button hx-post="/api/admin/snapshots/generate"
+        <button type="button"
+                hx-post="/api/admin/snapshots/generate"
                 hx-swap="none"
+                hx-disabled-elt="this"
                 class="gf-btn gf-btn-primary"
                 data-gen-label="{{ t('reports.generating')|e }}"
-                onclick="this.textContent=this.dataset.genLabel; this.disabled=true; this.style.opacity='0.5';">
+                hx-on::before-request="this.dataset.origLabel=this.textContent; this.textContent=this.dataset.genLabel;"
+                hx-on::after-request="this.textContent=this.dataset.origLabel;">
             {{ t('reports.generate_snapshots') }}
         </button>
         {% endif %}

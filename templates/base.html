@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#1a73e8">
+    <link rel="icon" href="/static/brand-mark.png" type="image/png" sizes="256x256">
+    <link rel="icon" href="/static/favicon.ico" sizes="any">
     <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +43,8 @@
         };
     </script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+    <script src="/static/js/cop-format.js"></script>
     <link rel="stylesheet" href="/static/css/custom.css">
 </head>
 <body class="min-h-screen font-sans antialiased bg-white text-gf-text">
@@ -50,7 +53,8 @@
     <div class="gf-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside class="gf-sidebar" id="sidebar">
         <div class="gf-sidebar-brand">
-            <span>F</span>ONAFAHE
+            <img src="/static/brand-mark.png" alt="" width="32" height="32" class="gf-sidebar-brand-icon">
+            <span class="gf-sidebar-brand-name"><span class="gf-sidebar-brand-accent">F</span>ONAFAHE</span>
         </div>
 
         <nav class="mt-2 pb-4">
@@ -93,14 +97,12 @@
                 {{ t('nav.reports') }}
             </a>
 
-            {% if is_admin %}
             <a href="/reports/fund" class="gf-nav-item {% if '/reports/fund' in current_path %}active{% endif %}">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"/>
                 </svg>
                 {{ t('nav.fund') }}
             </a>
-            {% endif %}
 
             <div class="gf-nav-divider"></div>
 
@@ -153,7 +155,6 @@
     </main>
     {% endif %}
 
-    <script src="/static/js/cop-format.js"></script>
     <script src="/static/js/cop-default-contrib.js" defer></script>
 </body>
 </html>

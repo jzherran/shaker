@@ -10,7 +10,7 @@ from ..config import get_settings
 from ..dependencies import get_db, templates
 from ..i18n import locale_from_request, translate, translate_html
 from ..models.user import User
-from ..services import account_service, report_service, user_service
+from ..services import account_service, loan_service, report_service, user_service
 
 router = APIRouter()
 
@@ -38,6 +38,21 @@ async def login_page(request: Request):
         "err_oauth": translate(lang, "login.js.err_oauth"),
         "err_unexpected": translate(lang, "login.js.err_unexpected"),
     }
+
+    mock_users: list[dict] = []
+    if settings.app_env == "development":
+        db = get_db()
+        result = (
+            db.table("users")
+            .select("email, full_name, role")
+            .like("email", "%@fonafahe.dev")
+            .eq("is_active", True)
+            .order("role")
+            .order("full_name")
+            .execute()
+        )
+        mock_users = result.data or []
+
     return templates.TemplateResponse(
         request,
         "login.html",
@@ -46,6 +61,7 @@ async def login_page(request: Request):
             "supabase_key": settings.supabase_key,
             "app_env": settings.app_env,
             "login_js": login_js,
+            "mock_users": mock_users,
         },
     )
 
@@ -118,6 +134,47 @@ async def set_session(request: Request):
         httponly=True,
         samesite="lax",
         max_age=60 * 60 * 24 * 7,  # 7 days
+    )
+    return response
+
+
+@router.post("/auth/mock-login")
+async def mock_login(request: Request):
+    """Development-only login: issue a session cookie for a mock user by email.
+
+    Strictly disabled outside of the development environment.
+    """
+    settings = get_settings()
+    if settings.app_env != "development":
+        raise HTTPException(status_code=403, detail="Mock login is disabled")
+
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    db = get_db()
+    result = (
+        db.table("users")
+        .select("auth_id, email, is_active")
+        .eq("email", email)
+        .eq("is_active", True)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Mock user not found")
+
+    auth_id = result.data[0]["auth_id"]
+    user_email = result.data[0]["email"]
+
+    token = create_session_token(auth_id, user_email)
+    response = Response(content='{"ok": true}', media_type="application/json")
+    response.set_cookie(
+        key="session",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7,
     )
     return response
 
@@ -216,11 +273,27 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
 
     # Get recent contributions for this account
     recent_contributions = []
+    balance_history: list[dict] = []
     if account:
         from ..services import contribution_service
 
         recent_contributions = await contribution_service.get_contributions(
             db, account_id=account.id, limit=5
+        )
+        balance_history = await report_service.get_account_balance_history(
+            db, account.id, months=12
+        )
+
+    fund_history: list[dict] = []
+    fund_per_account: dict = {"labels": [], "series": []}
+    if user.role == "admin":
+        fund_history = await report_service.get_fund_historical_balances(db, months=12)
+        fund_per_account = await report_service.get_fund_per_account_history(db, months=12)
+
+    loan_repayment_summary: dict | None = None
+    if user.role != "admin" and account:
+        loan_repayment_summary = await loan_service.summarize_active_loan_repayments(
+            db, account.id
         )
 
     return templates.TemplateResponse(
@@ -233,5 +306,9 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
             "fund": fund,
             "recent_contributions": recent_contributions,
             "merge_pending": merge_pending,
+            "balance_history": balance_history,
+            "fund_history": fund_history,
+            "fund_per_account": fund_per_account,
+            "loan_repayment_summary": loan_repayment_summary,
         },
     )

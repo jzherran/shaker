@@ -52,7 +52,11 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () { init(document); });
-    document.body.addEventListener("htmx:afterSwap", function (evt) { init(evt.detail.target); });
+    // after outerHTML swap, detail.target is the *removed* node; detail.elt is the live swapped-in root(s).
+    document.body.addEventListener("htmx:afterSwap", function (evt) {
+        var root = evt.detail && evt.detail.elt ? evt.detail.elt : evt.detail.target;
+        if (root && root.nodeType === 1) init(root);
+    });
     document.body.addEventListener("htmx:configRequest", function (evt) {
         var elt = evt.detail.elt;
         var form = elt && elt.tagName === "FORM" ? elt : elt && elt.closest ? elt.closest("form") : null;

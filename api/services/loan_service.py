@@ -266,6 +266,36 @@ async def get_loans(
     return [Loan(**row) for row in result.data]
 
 
+async def summarize_active_loan_repayments(db: Client, account_id: str) -> dict:
+    """Remaining principal on active loans for a borrower account (for member dashboard)."""
+    loans_list = await get_loans(db, account_id=account_id, status="active")
+    total_remaining_principal = 0.0
+    due_dates: list[date] = []
+    for loan in loans_list:
+        approved = float(loan.amount_approved or 0)
+        pay_res = (
+            db.table("loan_payments")
+            .select("principal_amount")
+            .eq("loan_id", loan.id)
+            .eq("status", "completed")
+            .execute()
+        )
+        paid_principal = sum(float(r["principal_amount"]) for r in pay_res.data)
+        total_remaining_principal += max(0.0, approved - paid_principal)
+        if loan.due_date:
+            d = loan.due_date
+            if isinstance(d, str):
+                due_dates.append(date.fromisoformat(d[:10]))
+            else:
+                due_dates.append(d)
+    nearest = min(due_dates) if due_dates else None
+    return {
+        "total_outstanding_principal": total_remaining_principal,
+        "active_loan_count": len(loans_list),
+        "nearest_due_date": nearest,
+    }
+
+
 async def add_guarantor(db: Client, data: LoanGuarantorCreate) -> LoanGuarantor:
     result = (
         db.table("loan_guarantors")

@@ -92,3 +92,5 @@ ENV/
 
 #MACOS
 .DS_Store
+
+scripts/mocks/*

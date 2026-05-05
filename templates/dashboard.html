@@ -17,7 +17,7 @@
     </div>
     {% endif %}
 
-    {% if fund %}
+    {% if is_admin and fund %}
     <div class="gf-card gf-metric">
         <div class="gf-metric-label">{{ t('dashboard.collective_fund') }}</div>
         <div class="gf-metric-value">{{ fund.total_balance|cop }}</div>
@@ -27,6 +27,24 @@
         <div class="gf-metric-label">{{ t('dashboard.available_lending') }}</div>
         <div class="gf-metric-value gf-positive">{{ fund.available_for_lending|cop }}</div>
         <div class="gf-metric-sub">{{ t('dashboard.active_loans_prefix') }} {{ fund.total_active_loans|cop }}</div>
+    </div>
+    {% elif not is_admin and loan_repayment_summary is not none %}
+    <div class="gf-card gf-metric {% if account %}sm:col-span-2 lg:col-span-2{% else %}sm:col-span-2 lg:col-span-3{% endif %}">
+        <div class="gf-metric-label">{{ t('dashboard.loan_pending_title') }}</div>
+        <div class="gf-metric-value" style="color: var(--gf-amber);">{{ loan_repayment_summary.total_outstanding_principal|cop }}</div>
+        <div class="gf-metric-sub">
+            {% if loan_repayment_summary.active_loan_count > 0 %}
+            {{ t('dashboard.loan_pending_sub', count=loan_repayment_summary.active_loan_count) }}
+            {% if loan_repayment_summary.nearest_due_date %}
+            · {{ t('dashboard.loan_due_prefix') }} {{ loan_repayment_summary.nearest_due_date.strftime('%Y-%m-%d') }}
+            {% endif %}
+            {% else %}
+            {{ t('dashboard.loan_pending_none') }}
+            {% endif %}
+        </div>
+        <div class="mt-3">
+            <a href="/loans" class="gf-link text-sm">{{ t('dashboard.view_loans') }}</a>
+        </div>
     </div>
     {% endif %}
 </div>
@@ -43,6 +61,49 @@
         {{ t('dashboard.request_loan') }}
     </a>
 </div>
+
+{# ── Balance growth charts (full-width, stacked) ── #}
+{% if balance_history or fund_history %}
+<div class="flex flex-col gap-6 mb-8">
+    {% if balance_history %}
+    <div class="gf-card p-4 w-full">
+        <div class="flex items-baseline justify-between mb-3">
+            <h3 class="text-sm font-medium text-gf-text">{{ t('dashboard.your_growth_title') }}</h3>
+            <span class="text-xs text-gf-text-3">{{ t('dashboard.last_12_months') }}</span>
+        </div>
+        <div class="gf-chart-container" style="height: 320px;">
+            <canvas id="user-balance-chart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if is_admin and fund_history %}
+    <div class="gf-card p-4 w-full">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+            <h3 class="text-sm font-medium text-gf-text">{{ t('dashboard.fund_growth_title') }}</h3>
+            <div class="flex items-center gap-3">
+                <div class="inline-flex rounded border border-gf-border-s overflow-hidden text-xs" role="tablist" aria-label="Fund chart view">
+                    <button type="button" id="fund-view-total"
+                        class="fund-view-btn px-3 py-1 font-medium bg-gf-blue-bg text-gf-blue"
+                        data-view="total" aria-pressed="true">
+                        {{ t('dashboard.fund_view_total') }}
+                    </button>
+                    <button type="button" id="fund-view-per-user"
+                        class="fund-view-btn px-3 py-1 font-medium text-gf-text-2 hover:bg-gf-surface border-l border-gf-border-s"
+                        data-view="per-user" aria-pressed="false">
+                        {{ t('dashboard.fund_view_per_user') }}
+                    </button>
+                </div>
+                <span class="text-xs text-gf-text-3">{{ t('dashboard.last_12_months') }}</span>
+            </div>
+        </div>
+        <div class="gf-chart-container" style="height: 320px;">
+            <canvas id="fund-balance-chart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
 
 {# ── Recent contributions with chart ── #}
 {% if recent_contributions %}
@@ -113,6 +174,152 @@
             },
         },
     });
+})();
+</script>
+{% endif %}
+
+{% if balance_history or (is_admin and fund_history) %}
+<script>
+(function() {
+    const PALETTE = [
+        '#1a73e8', '#137333', '#a50e0e', '#e37400', '#7b1fa2',
+        '#0277bd', '#558b2f', '#d81b60', '#5d4037', '#455a64',
+    ];
+
+    const baseLineOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${formatCOP(ctx.parsed.y)}`,
+                },
+            },
+        },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#80868b' } },
+            y: {
+                grid: { color: '#e8eaed' },
+                ticks: { font: { size: 11 }, color: '#80868b', callback: v => formatCOP(v) },
+                beginAtZero: true,
+            },
+        },
+    };
+
+    function buildSingleLineChart(canvasId, points, color, fillColor) {
+        const el = document.getElementById(canvasId);
+        if (!el || !points || !points.length) return null;
+        const labels = points.map(p => p.date.slice(0, 7));
+        const data = points.map(p => Number(p.balance));
+        return new Chart(el, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    borderColor: color,
+                    backgroundColor: fillColor,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.25,
+                    pointRadius: 3,
+                    pointBackgroundColor: color,
+                }],
+            },
+            options: baseLineOptions,
+        });
+    }
+
+    {% if balance_history %}
+    buildSingleLineChart('user-balance-chart', {{ balance_history|tojson }}, '#1a73e8', 'rgba(26, 115, 232, 0.12)');
+    {% endif %}
+
+    {% if is_admin and fund_history %}
+    const fundTotal = {{ fund_history|tojson }};
+    const fundPerAccount = {{ fund_per_account|tojson }};
+
+    function totalDataset() {
+        return {
+            labels: fundTotal.map(p => p.date.slice(0, 7)),
+            datasets: [{
+                label: '{{ t("dashboard.fund_view_total") }}',
+                data: fundTotal.map(p => Number(p.balance)),
+                borderColor: '#137333',
+                backgroundColor: 'rgba(19, 115, 51, 0.12)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.25,
+                pointRadius: 3,
+                pointBackgroundColor: '#137333',
+            }],
+        };
+    }
+
+    function perAccountDataset() {
+        const datasets = (fundPerAccount.series || []).map((s, i) => {
+            const color = PALETTE[i % PALETTE.length];
+            return {
+                label: s.name,
+                data: s.data,
+                borderColor: color,
+                backgroundColor: color,
+                borderWidth: 2,
+                fill: false,
+                tension: 0.25,
+                pointRadius: 2,
+                pointBackgroundColor: color,
+                spanGaps: true,
+            };
+        });
+        return { labels: fundPerAccount.labels || [], datasets };
+    }
+
+    const fundEl = document.getElementById('fund-balance-chart');
+    let fundChart = null;
+    if (fundEl) {
+        fundChart = new Chart(fundEl, {
+            type: 'line',
+            data: totalDataset(),
+            options: {
+                ...baseLineOptions,
+                plugins: {
+                    ...baseLineOptions.plugins,
+                    legend: { display: false },
+                },
+            },
+        });
+    }
+
+    function setView(view) {
+        if (!fundChart) return;
+        if (view === 'per-user') {
+            fundChart.data = perAccountDataset();
+            fundChart.options.plugins.legend = {
+                display: true,
+                position: 'bottom',
+                labels: { font: { size: 11 }, color: '#5f6368', boxWidth: 12, boxHeight: 12 },
+            };
+        } else {
+            fundChart.data = totalDataset();
+            fundChart.options.plugins.legend = { display: false };
+        }
+        fundChart.update();
+
+        document.querySelectorAll('.fund-view-btn').forEach(btn => {
+            const active = btn.getAttribute('data-view') === view;
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            btn.classList.toggle('bg-gf-blue-bg', active);
+            btn.classList.toggle('text-gf-blue', active);
+            btn.classList.toggle('text-gf-text-2', !active);
+        });
+    }
+
+    document.querySelectorAll('.fund-view-btn').forEach(btn => {
+        btn.addEventListener('click', () => setView(btn.getAttribute('data-view')));
+    });
+    {% endif %}
 })();
 </script>
 {% endif %}

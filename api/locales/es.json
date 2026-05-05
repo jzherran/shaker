@@ -55,7 +55,17 @@
     "date": "Fecha",
     "type": "Tipo",
     "period": "Periodo",
-    "amount": "Monto"
+    "amount": "Monto",
+    "your_growth_title": "Crecimiento de tu saldo",
+    "fund_growth_title": "Crecimiento del fondo colectivo",
+    "last_12_months": "Últimos 12 meses",
+    "fund_view_total": "Total",
+    "fund_view_per_user": "Por usuario",
+    "loan_pending_title": "Capital de préstamo pendiente",
+    "loan_pending_sub": "{count} préstamo(s) activo(s)",
+    "loan_pending_none": "Sin préstamos activos por pagar.",
+    "loan_due_prefix": "Próximo vencimiento",
+    "view_loans": "Ver préstamos"
   },
   "accounts": {
     "title": "Cuentas",

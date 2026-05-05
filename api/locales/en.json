@@ -55,7 +55,17 @@
     "date": "Date",
     "type": "Type",
     "period": "Period",
-    "amount": "Amount"
+    "amount": "Amount",
+    "your_growth_title": "Your Balance Growth",
+    "fund_growth_title": "Collective Fund Growth",
+    "last_12_months": "Last 12 months",
+    "fund_view_total": "Total",
+    "fund_view_per_user": "Per user",
+    "loan_pending_title": "Loan principal remaining",
+    "loan_pending_sub": "{count} active loan(s)",
+    "loan_pending_none": "No active loans to repay.",
+    "loan_due_prefix": "Next due",
+    "view_loans": "View loans"
   },
   "accounts": {
     "title": "Accounts",

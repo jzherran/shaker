@@ -31,7 +31,9 @@
     "admin": "Admin",
     "view_as_user": "View as user",
     "user_view": "User view",
-    "back_to_admin": "Back to admin"
+    "back_to_admin": "Back to admin",
+    "view_mode_short_admin": "As user",
+    "view_mode_short_user": "Admin"
   },
   "footer": {
     "copyright": "Shaker - FONAFAHE © 2026",

@@ -124,8 +124,10 @@ body {
 
 .gf-content {
     max-width: 1100px;
+    min-width: 70%;
     margin: 0 auto;
     padding: 24px 32px 48px;
+    box-sizing: border-box;
 }
 
 /* ── Cards ── */
@@ -451,4 +453,17 @@ body {
     color: var(--gf-blue-text);
 }
 
+@media (max-width: 639px) {
+    .gf-view-mode-toggle {
+        min-height: 36px;
+        padding: 6px 10px;
+        border-radius: 6px;
+    }
+}
+
 body.gf-view-as-user .gf-admin-only { display: none !important; }
+
+/* Admin fund metric nodes stay in DOM under view-as-user; grid-cols-3 leaves one visible card in column 1 (~⅓ width). */
+body.gf-view-as-user .gf-dashboard-metrics {
+    grid-template-columns: minmax(0, 1fr) !important;
+}

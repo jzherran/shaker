@@ -124,20 +124,23 @@
                 </svg>
             </button>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 sm:flex-initial justify-end">
                 {% if is_admin %}
-                <button type="button" id="view-mode-toggle" class="gf-badge gf-badge-toggle text-xs"
+                <button type="button" id="view-mode-toggle" class="gf-badge gf-badge-toggle gf-view-mode-toggle text-xs shrink-0 touch-manipulation"
                         aria-pressed="false"
                         data-label-admin="{{ t('nav.admin') }} · {{ t('nav.view_as_user') }}"
-                        data-label-user="{{ t('nav.user_view') }} · {{ t('nav.back_to_admin') }}">
-                    <span class="gf-toggle-text"></span>
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        data-label-user="{{ t('nav.user_view') }} · {{ t('nav.back_to_admin') }}"
+                        data-label-admin-short="{{ t('nav.view_mode_short_admin') }}"
+                        data-label-user-short="{{ t('nav.view_mode_short_user') }}">
+                    <span class="gf-toggle-text hidden sm:inline">{{ t('nav.admin') }} · {{ t('nav.view_as_user') }}</span>
+                    <span class="gf-toggle-text-sm sm:hidden whitespace-nowrap">{{ t('nav.view_mode_short_admin') }}</span>
+                    <svg class="w-3 h-3 ml-1 shrink-0 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-3-3m0 0l3-3m-3 3h12m0 0l-3 3m3-3l-3-3"/>
                     </svg>
                 </button>
                 {% endif %}
-                <span class="text-sm text-gf-text-2">{{ user.full_name }}</span>
-                <a href="/auth/logout" class="text-sm text-gf-text-3 hover:text-gf-text transition">{{ t('nav.logout') }}</a>
+                <span class="text-sm text-gf-text-2 truncate min-w-0 max-w-[7.5rem] sm:max-w-[12rem] md:max-w-none">{{ user.full_name }}</span>
+                <a href="/auth/logout" class="text-sm text-gf-text-3 hover:text-gf-text transition shrink-0 whitespace-nowrap">{{ t('nav.logout') }}</a>
             </div>
         </header>
 
@@ -178,10 +181,14 @@
                 var btn = document.getElementById('view-mode-toggle');
                 if (btn) {
                     var label = btn.querySelector('.gf-toggle-text');
-                    if (label) {
-                        label.textContent = active ? btn.dataset.labelUser : btn.dataset.labelAdmin;
+                    var labelSm = btn.querySelector('.gf-toggle-text-sm');
+                    var full = active ? btn.dataset.labelUser : btn.dataset.labelAdmin;
+                    if (label) label.textContent = full;
+                    if (labelSm) {
+                        labelSm.textContent = active ? btn.dataset.labelUserShort : btn.dataset.labelAdminShort;
                     }
                     btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    btn.setAttribute('aria-label', full);
                     btn.classList.toggle('is-user-mode', active);
                 }
                 syncSelects(active);

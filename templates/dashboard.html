@@ -8,7 +8,16 @@
 </div>
 
 {# ── Metric cards ── #}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+{% set _metric_cards = namespace(c=0) %}
+{% if account %}{% set _metric_cards.c = _metric_cards.c + 1 %}{% endif %}
+{% if is_admin and fund %}
+{% set _metric_cards.c = _metric_cards.c + 2 %}
+{% elif not is_admin and loan_repayment_summary is not none %}
+{% set _metric_cards.c = _metric_cards.c + 1 %}
+{% endif %}
+{# Single balance (member without loan, or admin with account only): full width. Single loan-only card: capped width. #}
+{% set _metric_balance_only_full = _metric_cards.c == 1 and account and (is_admin or loan_repayment_summary is none) %}
+<div class="gf-dashboard-metrics grid gap-4 mb-8 w-full {% if _metric_cards.c == 1 and not _metric_balance_only_full %}grid-cols-1 max-w-md{% elif _metric_cards.c == 1 %}grid-cols-1{% else %}grid-cols-1 sm:grid-cols-2 lg:grid-cols-3{% endif %}">
     {% if account %}
     <div class="gf-card gf-metric">
         <div class="gf-metric-label">{{ t('dashboard.your_balance') }}</div>

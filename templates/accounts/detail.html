@@ -46,7 +46,13 @@
         </div>
         <div>
             <dt class="text-gf-text-3 text-xs font-medium uppercase tracking-wide">{{ t('accounts.last_contribution') }}</dt>
-            <dd class="mt-1">{{ account.last_contribution_at[:10] if account.last_contribution_at else t('accounts.never') }}</dd>
+            <dd class="mt-1">
+                {%- if account.last_contribution_at -%}
+                    {{ account.last_contribution_at[:10] if account.last_contribution_at is string else account.last_contribution_at.strftime('%Y-%m-%d') }}
+                {%- else -%}
+                    {{ t('accounts.never') }}
+                {%- endif -%}
+            </dd>
         </div>
     </dl>
 </div>

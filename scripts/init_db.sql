@@ -162,12 +162,17 @@ CREATE TABLE public.loan_payments (
     interest_amount NUMERIC(15, 2) NOT NULL DEFAULT 0,
     payment_number INT NOT NULL,
     receipt_reference TEXT,
-    status TEXT NOT NULL DEFAULT 'completed'
+    notes TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'completed', 'cancelled')),
+    submitted_by UUID REFERENCES public.users(id),
+    approved_by UUID REFERENCES public.users(id),
+    approved_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_loan_payments_loan_id ON public.loan_payments(loan_id);
+CREATE INDEX idx_loan_payments_status ON public.loan_payments(status);
 
 -- ============================================================
 -- BALANCE SNAPSHOTS (daily/monthly/yearly aggregations)
@@ -299,42 +304,95 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Record a loan payment
+-- Record a loan payment (always inserted as 'pending' awaiting admin approval)
 CREATE OR REPLACE FUNCTION record_loan_payment(
     p_loan_id UUID,
     p_amount NUMERIC,
     p_principal NUMERIC,
     p_interest NUMERIC,
     p_payment_number INT,
-    p_receipt_reference TEXT
+    p_receipt_reference TEXT,
+    p_submitted_by UUID DEFAULT NULL,
+    p_notes TEXT DEFAULT NULL
 ) RETURNS UUID AS $$
 DECLARE
     v_payment_id UUID;
-    v_total_paid NUMERIC;
-    v_amount_approved NUMERIC;
 BEGIN
     INSERT INTO loan_payments (
         loan_id, amount, principal_amount, interest_amount,
-        payment_number, receipt_reference
+        payment_number, receipt_reference, status, submitted_by, notes
     ) VALUES (
         p_loan_id, p_amount, p_principal, p_interest,
-        p_payment_number, p_receipt_reference
+        p_payment_number, p_receipt_reference, 'pending', p_submitted_by, p_notes
     ) RETURNING id INTO v_payment_id;
 
-    -- Check if loan is fully paid
-    SELECT COALESCE(SUM(principal_amount), 0) INTO v_total_paid
-    FROM loan_payments
-    WHERE loan_id = p_loan_id AND status = 'completed';
+    RETURN v_payment_id;
+END;
+$$ LANGUAGE plpgsql;
 
-    SELECT amount_approved INTO v_amount_approved
-    FROM loans WHERE id = p_loan_id;
+-- Approve a pending loan payment; mark loan as paid if fully covered
+CREATE OR REPLACE FUNCTION approve_loan_payment(
+    p_payment_id UUID,
+    p_approved_by UUID
+) RETURNS VOID AS $$
+DECLARE
+    v_loan_id UUID;
+    v_status TEXT;
+    v_total_paid NUMERIC;
+    v_amount_approved NUMERIC;
+BEGIN
+    SELECT loan_id, status INTO v_loan_id, v_status
+    FROM loan_payments WHERE id = p_payment_id;
 
-    IF v_total_paid >= v_amount_approved THEN
-        UPDATE loans SET status = 'paid', updated_at = NOW()
-        WHERE id = p_loan_id;
+    IF v_loan_id IS NULL THEN
+        RAISE EXCEPTION 'Payment not found';
+    END IF;
+    IF v_status != 'pending' THEN
+        RAISE EXCEPTION 'Only pending payments can be approved';
     END IF;
 
-    RETURN v_payment_id;
+    UPDATE loan_payments
+    SET status = 'completed',
+        approved_by = p_approved_by,
+        approved_at = NOW()
+    WHERE id = p_payment_id;
+
+    SELECT COALESCE(SUM(principal_amount), 0) INTO v_total_paid
+    FROM loan_payments
+    WHERE loan_id = v_loan_id AND status = 'completed';
+
+    SELECT amount_approved INTO v_amount_approved
+    FROM loans WHERE id = v_loan_id;
+
+    IF v_amount_approved IS NOT NULL AND v_total_paid >= v_amount_approved THEN
+        UPDATE loans SET status = 'paid', updated_at = NOW()
+        WHERE id = v_loan_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Reject a pending loan payment
+CREATE OR REPLACE FUNCTION reject_loan_payment(
+    p_payment_id UUID,
+    p_rejected_by UUID
+) RETURNS VOID AS $$
+DECLARE
+    v_status TEXT;
+BEGIN
+    SELECT status INTO v_status FROM loan_payments WHERE id = p_payment_id;
+
+    IF v_status IS NULL THEN
+        RAISE EXCEPTION 'Payment not found';
+    END IF;
+    IF v_status != 'pending' THEN
+        RAISE EXCEPTION 'Only pending payments can be rejected';
+    END IF;
+
+    UPDATE loan_payments
+    SET status = 'cancelled',
+        approved_by = p_rejected_by,
+        approved_at = NOW()
+    WHERE id = p_payment_id;
 END;
 $$ LANGUAGE plpgsql;
 

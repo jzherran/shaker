@@ -60,6 +60,7 @@ class LoanPaymentCreate(BaseModel):
     interest_amount: float = 0
     payment_number: int
     receipt_reference: str | None = None
+    notes: str | None = None
 
 
 class LoanPayment(BaseModel):
@@ -70,5 +71,9 @@ class LoanPayment(BaseModel):
     interest_amount: float
     payment_number: int
     receipt_reference: str | None = None
+    notes: str | None = None
     status: str
+    submitted_by: str | None = None
+    approved_by: str | None = None
+    approved_at: datetime | None = None
     created_at: datetime

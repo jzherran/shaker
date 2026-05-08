@@ -139,6 +139,44 @@
 </div>
 {% endif %}
 
+{# ── Submit a payment (borrower) ── #}
+{% if (is_owner or is_admin) and loan.status in ('active', 'approved') %}
+<div class="gf-card p-5 mb-6">
+    <h2 class="gf-section-title">{{ t('loans.submit_payment_title') }}</h2>
+    <p class="text-sm text-gf-text-2 mb-4">{{ t('loans.submit_payment_sub') }}</p>
+    <form id="submit-payment-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" onsubmit="return submitPayment(event)">
+        <div>
+            <label class="gf-label" for="pay-amount">{{ t('loans.payment_amount') }}</label>
+            <input id="pay-amount" name="amount" type="number" step="0.01" min="0.01" required class="gf-input">
+        </div>
+        <div>
+            <label class="gf-label" for="pay-principal">{{ t('loans.payment_principal') }}</label>
+            <input id="pay-principal" name="principal_amount" type="number" step="0.01" min="0" value="0" class="gf-input">
+        </div>
+        <div>
+            <label class="gf-label" for="pay-interest">{{ t('loans.payment_interest') }}</label>
+            <input id="pay-interest" name="interest_amount" type="number" step="0.01" min="0" value="0" class="gf-input">
+        </div>
+        <div>
+            <label class="gf-label" for="pay-number">{{ t('loans.payment_number_label') }}</label>
+            <input id="pay-number" name="payment_number" type="number" step="1" min="1" value="{{ next_payment_number }}" required class="gf-input">
+        </div>
+        <div class="sm:col-span-2">
+            <label class="gf-label" for="pay-receipt">{{ t('loans.payment_receipt') }}</label>
+            <input id="pay-receipt" name="receipt_reference" type="text" placeholder="{{ t('loans.payment_receipt_placeholder') }}" class="gf-input">
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3">
+            <label class="gf-label" for="pay-notes">{{ t('loans.payment_notes') }}</label>
+            <textarea id="pay-notes" name="notes" rows="2" class="gf-input"></textarea>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3 flex items-center gap-3">
+            <button type="submit" class="gf-btn gf-btn-primary">{{ t('loans.payment_submit') }}</button>
+            <span id="pay-result" class="text-sm"></span>
+        </div>
+    </form>
+</div>
+{% endif %}
+
 {# ── Payments ── #}
 {% if payments %}
 <div class="gf-card p-5">
@@ -151,6 +189,8 @@
                 <th>{{ t('dashboard.amount') }}</th>
                 <th>{{ t('loans.principal') }}</th>
                 <th>{{ t('loans.interest') }}</th>
+                <th>{{ t('loans.payments_status') }}</th>
+                <th>{{ t('loans.payment_receipt') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -161,6 +201,14 @@
                 <td class="font-medium">{{ p.amount|cop }}</td>
                 <td>{{ p.principal_amount|cop }}</td>
                 <td class="text-gf-text-2">{{ p.interest_amount|cop }}</td>
+                <td>
+                    <span class="gf-badge {% if p.status == 'completed' %}gf-badge-green{% elif p.status == 'cancelled' %}gf-badge-red{% else %}gf-badge-amber{% endif %}">
+                        {{ t('loans.payment_status_labels.' ~ p.status) }}
+                    </span>
+                </td>
+                <td class="text-gf-text-3">
+                    <span class="font-mono text-xs">{{ p.receipt_reference or '—' }}</span>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -196,6 +244,41 @@
     async function disburseLoan() {
         const res = await fetch('/api/loans/{{ loan.id }}/disburse', { method: 'POST' });
         if (res.ok) location.reload();
+    }
+
+    const PAYMENT_SUCCESS_MSG = {{ t('loans.payment_success')|tojson }};
+    const PAYMENT_ERROR_MSG = {{ t('loans.payment_error')|tojson }};
+    async function submitPayment(ev) {
+        ev.preventDefault();
+        const form = ev.target;
+        const data = {
+            loan_id: '{{ loan.id }}',
+            amount: parseFloat(form.amount.value || '0'),
+            principal_amount: parseFloat(form.principal_amount.value || '0'),
+            interest_amount: parseFloat(form.interest_amount.value || '0'),
+            payment_number: parseInt(form.payment_number.value || '1', 10),
+            receipt_reference: form.receipt_reference.value || null,
+            notes: form.notes.value || null,
+        };
+        const out = document.getElementById('pay-result');
+        out.textContent = '';
+        out.className = 'text-sm';
+        const res = await fetch('/api/loans/{{ loan.id }}/payments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (res.ok) {
+            out.textContent = PAYMENT_SUCCESS_MSG;
+            out.className = 'text-sm font-medium';
+            out.style.color = 'var(--gf-green)';
+            setTimeout(() => location.reload(), 800);
+        } else {
+            const err = await res.json().catch(() => ({}));
+            out.textContent = (err.detail || PAYMENT_ERROR_MSG);
+            out.style.color = 'var(--gf-red)';
+        }
+        return false;
     }
 </script>
 {% endblock %}

@@ -107,20 +107,23 @@ async def loan_detail(request: Request, loan_id: str, user: User = Depends(get_c
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
 
-    # Non-admin can only view their own loans
+    is_owner = False
     if user.role != "admin":
         account = await account_service.get_account_by_user(db, user.id)
         if not account or loan.account_id != account.id:
             raise HTTPException(status_code=403, detail="Access denied")
+        is_owner = True
+    else:
+        owner_account = db.table("accounts").select("user_id").eq("id", loan.account_id).execute()
+        if owner_account.data and owner_account.data[0]["user_id"] == user.id:
+            is_owner = True
 
-    # Get amortization schedule
     schedule = []
     if loan.amount_approved:
         schedule = loan_service.calculate_amortization_schedule(
             loan.amount_approved, loan.interest_rate, loan.term_months
         )
 
-    # Get payments
     payments_result = (
         db.table("loan_payments")
         .select("*")
@@ -129,7 +132,6 @@ async def loan_detail(request: Request, loan_id: str, user: User = Depends(get_c
         .execute()
     )
 
-    # Get guarantors with user names
     guarantors = (
         db.table("loan_guarantors")
         .select("*, accounts(account_number, users(full_name))")
@@ -137,16 +139,26 @@ async def loan_detail(request: Request, loan_id: str, user: User = Depends(get_c
         .execute()
     )
 
+    # Suggest next installment number based on existing non-cancelled payments
+    used_numbers = {
+        int(p["payment_number"]) for p in payments_result.data if p.get("status") != "cancelled"
+    }
+    next_payment_number = 1
+    while next_payment_number in used_numbers:
+        next_payment_number += 1
+
     return templates.TemplateResponse(
         request,
         "loans/detail.html",
         {
             "user": user,
             "is_admin": user.role == "admin",
+            "is_owner": is_owner,
             "loan": loan,
             "schedule": schedule,
             "payments": payments_result.data,
             "guarantors": guarantors.data,
+            "next_payment_number": next_payment_number,
         },
     )
 
@@ -214,12 +226,67 @@ async def disburse_loan(loan_id: str, admin: User = Depends(require_admin)):
 
 @router.post("/api/loans/{loan_id}/payments")
 async def record_payment(
-    loan_id: str, data: LoanPaymentCreate, admin: User = Depends(require_admin)
+    loan_id: str, data: LoanPaymentCreate, user: User = Depends(get_current_user)
 ):
+    """Submit a loan payment. Anyone (admin or borrower) can submit; admins approve later."""
     db = get_db()
     if data.loan_id != loan_id:
         raise HTTPException(status_code=400, detail="Loan ID mismatch")
-    payment = await loan_service.record_payment(db, data)
+
+    loan = await loan_service.get_loan(db, loan_id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    if user.role != "admin":
+        account = await account_service.get_account_by_user(db, user.id)
+        if not account or loan.account_id != account.id:
+            raise HTTPException(
+                status_code=403, detail="Can only submit payments for your own loans"
+            )
+
+    if loan.status not in ("active", "approved"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot submit payment for loan in status '{loan.status}'",
+        )
+
+    payment = await loan_service.record_payment(db, data, submitted_by=user.id)
+    return payment.model_dump()
+
+
+@router.get("/admin/payments")
+async def admin_pending_payments(request: Request, admin: User = Depends(require_admin)):
+    """Admin view listing all pending loan payments awaiting approval."""
+    db = get_db()
+    pending = await loan_service.get_pending_payments(db)
+    return templates.TemplateResponse(
+        request,
+        "admin/payments.html",
+        {
+            "user": admin,
+            "is_admin": True,
+            "pending_payments": pending,
+        },
+    )
+
+
+@router.post("/api/loans/payments/{payment_id}/approve")
+async def approve_payment(payment_id: str, admin: User = Depends(require_admin)):
+    db = get_db()
+    try:
+        payment = await loan_service.approve_payment(db, payment_id, admin.id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return payment.model_dump()
+
+
+@router.post("/api/loans/payments/{payment_id}/reject")
+async def reject_payment(payment_id: str, admin: User = Depends(require_admin)):
+    db = get_db()
+    try:
+        payment = await loan_service.reject_payment(db, payment_id, admin.id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return payment.model_dump()
 
 

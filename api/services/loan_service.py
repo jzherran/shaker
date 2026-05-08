@@ -224,7 +224,10 @@ async def disburse_loan(db: Client, loan_id: str) -> None:
     ).execute()
 
 
-async def record_payment(db: Client, data: LoanPaymentCreate) -> LoanPayment:
+async def record_payment(
+    db: Client, data: LoanPaymentCreate, submitted_by: str | None = None
+) -> LoanPayment:
+    """Submit a loan payment. Always created as 'pending' awaiting admin approval."""
     result_data = db.rpc(
         "record_loan_payment",
         {
@@ -234,12 +237,56 @@ async def record_payment(db: Client, data: LoanPaymentCreate) -> LoanPayment:
             "p_interest": data.interest_amount,
             "p_payment_number": data.payment_number,
             "p_receipt_reference": data.receipt_reference or "",
+            "p_submitted_by": submitted_by,
+            "p_notes": data.notes,
         },
     ).execute()
 
     payment_id = result_data.data
     row = db.table("loan_payments").select("*").eq("id", payment_id).execute()
     return LoanPayment(**row.data[0])
+
+
+async def approve_payment(db: Client, payment_id: str, approved_by: str) -> LoanPayment:
+    """Approve a pending payment. Marks loan as 'paid' if fully covered."""
+    db.rpc(
+        "approve_loan_payment",
+        {"p_payment_id": payment_id, "p_approved_by": approved_by},
+    ).execute()
+    row = db.table("loan_payments").select("*").eq("id", payment_id).execute()
+    return LoanPayment(**row.data[0])
+
+
+async def reject_payment(db: Client, payment_id: str, rejected_by: str) -> LoanPayment:
+    """Reject (cancel) a pending payment."""
+    db.rpc(
+        "reject_loan_payment",
+        {"p_payment_id": payment_id, "p_rejected_by": rejected_by},
+    ).execute()
+    row = db.table("loan_payments").select("*").eq("id", payment_id).execute()
+    return LoanPayment(**row.data[0])
+
+
+async def get_payment(db: Client, payment_id: str) -> LoanPayment | None:
+    row = db.table("loan_payments").select("*").eq("id", payment_id).execute()
+    if not row.data:
+        return None
+    return LoanPayment(**row.data[0])
+
+
+async def get_pending_payments(db: Client) -> list[dict]:
+    """Fetch all pending payments with loan + borrower context for admin approval view."""
+    result = (
+        db.table("loan_payments")
+        .select(
+            "*, loans(id, account_id, amount_approved, accounts(account_number, "
+            "users(full_name, email)))"
+        )
+        .eq("status", "pending")
+        .order("created_at", desc=False)
+        .execute()
+    )
+    return result.data or []
 
 
 async def get_loan(db: Client, loan_id: str) -> Loan | None:

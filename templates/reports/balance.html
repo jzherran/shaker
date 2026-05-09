@@ -2,35 +2,118 @@
 {% block title %}{{ t('meta.reports_balance') }}{% endblock %}
 
 {% block content %}
-<h1 class="gf-page-title mb-6">{{ t('reports.balance_title') }}</h1>
+{% if balance_account_locked and accounts %}
+<div class="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+    <a href="/accounts/{{ accounts[0].id }}" class="gf-link text-sm">&larr; {{ t('reports.balance_back_account') }}</a>
+    {% if is_admin %}
+    <a href="/reports/balance?full=1" class="gf-link text-sm">{{ t('reports.balance_view_all') }}</a>
+    {% endif %}
+</div>
+{% elif is_admin and balance_admin_member_ui and balance_scope_fixed and accounts and not balance_full_report %}
+<div class="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+    <a href="/reports/balance?full=1" class="gf-link text-sm">{{ t('reports.balance_view_all') }}</a>
+</div>
+{% endif %}
+<h1 class="gf-page-title {% if balance_account_locked and accounts or balance_scope_fixed and accounts %}mb-2{% else %}mb-6{% endif %}">{{ t('reports.balance_title') }}</h1>
+{% if balance_account_locked and accounts %}
+<p class="text-sm text-gf-text-2 mb-6">{{ t('reports.balance_profile_scope', name=accounts[0].owner_name or accounts[0].account_number, number=accounts[0].account_number) }}</p>
+{% elif balance_scope_fixed and accounts %}
+<p class="text-sm text-gf-text-2 mb-6">{{ t('reports.balance_own_scope', number=accounts[0].account_number) }}</p>
+{% endif %}
 
 <div class="gf-card p-5 mb-6">
-    <form id="report-form" class="flex flex-wrap gap-4 items-end">
+    <form id="report-form" class="space-y-4">
+        <div class="flex flex-wrap items-end gap-4">
+            <div>
+                <label class="gf-label" for="snapshot_type">{{ t('reports.type') }}</label>
+                <select id="snapshot_type" class="gf-select" style="width: auto;">
+                    <option value="daily">{{ t('reports.daily') }}</option>
+                    <option value="monthly" selected>{{ t('reports.monthly') }}</option>
+                    <option value="yearly">{{ t('reports.yearly') }}</option>
+                </select>
+            </div>
+
+            {# Daily: date range. Monthly: year + month (i18n names). Yearly: year numbers. #}
+            <div data-range-for="daily" class="hidden">
+                <label class="gf-label" for="date_from">{{ t('reports.from') }}</label>
+                <input type="date" id="date_from" class="gf-input" style="width: auto;">
+            </div>
+            <div data-range-for="daily" class="hidden">
+                <label class="gf-label" for="date_to">{{ t('reports.to') }}</label>
+                <input type="date" id="date_to" class="gf-input" style="width: auto;">
+            </div>
+            <div data-range-for="monthly">
+                <span class="gf-label block mb-1">{{ t('reports.from') }}</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="sr-only" for="month_year_from">{{ t('reports.year') }}</label>
+                    <input type="number" id="month_year_from" class="gf-input" min="2000" max="2100" style="width: 88px;" aria-label="{{ t('reports.year') }}">
+                    <select id="month_from" class="gf-select" style="width: auto;" aria-label="{{ t('contributions.month_label') }}">
+                        {% for m in range(1, 13) %}
+                        {% set mm = ('0' ~ m) if m < 10 else (m ~ '') %}
+                        <option value="{{ mm }}">{{ t('reports.month_' ~ mm) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div data-range-for="monthly">
+                <span class="gf-label block mb-1">{{ t('reports.to') }}</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="sr-only" for="month_year_to">{{ t('reports.year') }}</label>
+                    <input type="number" id="month_year_to" class="gf-input" min="2000" max="2100" style="width: 88px;" aria-label="{{ t('reports.year') }}">
+                    <select id="month_to" class="gf-select" style="width: auto;" aria-label="{{ t('contributions.month_label') }}">
+                        {% for m in range(1, 13) %}
+                        {% set mm = ('0' ~ m) if m < 10 else (m ~ '') %}
+                        <option value="{{ mm }}">{{ t('reports.month_' ~ mm) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div data-range-for="yearly" class="hidden">
+                <label class="gf-label" for="year_from">{{ t('reports.from') }}</label>
+                <input type="number" id="year_from" class="gf-input" min="2000" max="2100" style="width: 110px;">
+            </div>
+            <div data-range-for="yearly" class="hidden">
+                <label class="gf-label" for="year_to">{{ t('reports.to') }}</label>
+                <input type="number" id="year_to" class="gf-input" min="2000" max="2100" style="width: 110px;">
+            </div>
+
+            <button type="submit" class="gf-btn gf-btn-primary">{{ t('reports.load') }}</button>
+        </div>
+
+        {% if not balance_scope_fixed %}
         <div>
-            <label class="gf-label">{{ t('reports.account') }}</label>
-            <select id="account_id" class="gf-select" style="width: auto; min-width: 200px;">
+            <div class="flex items-center justify-between mb-2">
+                <label class="gf-label mb-0">{{ t('reports.account') }}</label>
+                {% if is_admin and accounts|length > 1 %}
+                <div class="flex gap-3 text-xs">
+                    <button type="button" class="gf-link" onclick="toggleAllBalanceAccounts(true)">
+                        {{ t('reports.select_all') }}
+                    </button>
+                    <button type="button" class="gf-link" onclick="toggleAllBalanceAccounts(false)">
+                        {{ t('reports.clear') }}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="border border-gf-border rounded max-h-56 overflow-y-auto p-2 bg-gf-surface">
+                {% if accounts %}
                 {% for a in accounts %}
-                <option value="{{ a.id }}"{% if is_admin and a.user_id != user.id %} class="gf-admin-only"{% endif %}>{{ a.owner_name or a.account_number }}</option>
+                <label class="flex items-center gap-2 py-1 text-sm cursor-pointer hover:bg-white px-1 rounded">
+                    <input type="checkbox"
+                           class="balance-account-cb rounded border-gf-border-s"
+                           value="{{ a.id }}"
+                           data-name="{{ a.owner_name or a.account_number }}"
+                           {% if loop.first %}checked{% endif %}>
+                    <span class="flex-1 truncate">{{ a.owner_name or a.account_number }}</span>
+                    <span class="font-mono text-xs text-gf-text-3">{{ a.account_number }}</span>
+                </label>
                 {% endfor %}
-            </select>
+                {% else %}
+                <p class="text-sm text-gf-text-3 px-1">{{ t('reports.no_accounts') }}</p>
+                {% endif %}
+            </div>
         </div>
-        <div>
-            <label class="gf-label">{{ t('reports.type') }}</label>
-            <select id="snapshot_type" class="gf-select" style="width: auto;">
-                <option value="daily">{{ t('reports.daily') }}</option>
-                <option value="monthly" selected>{{ t('reports.monthly') }}</option>
-                <option value="yearly">{{ t('reports.yearly') }}</option>
-            </select>
-        </div>
-        <div>
-            <label class="gf-label">{{ t('reports.from') }}</label>
-            <input type="date" id="date_from" class="gf-input" style="width: auto;">
-        </div>
-        <div>
-            <label class="gf-label">{{ t('reports.to') }}</label>
-            <input type="date" id="date_to" class="gf-input" style="width: auto;">
-        </div>
-        <button type="submit" class="gf-btn gf-btn-primary">{{ t('reports.load') }}</button>
+        {% endif %}
     </form>
 </div>
 
@@ -43,92 +126,177 @@
 
 {# ── Table ── #}
 <div id="report-data" class="gf-card overflow-hidden">
-    <p class="gf-empty">{{ t('reports.hint') }}</p>
+    <p class="gf-empty">{% if balance_scope_fixed %}{{ t('reports.hint_balance_scoped') }}{% else %}{{ t('reports.hint') }}{% endif %}</p>
 </div>
 
 <script>
     const RB = {
         err: {{ t('reports.error_load')|tojson }},
         empty: {{ t('reports.no_snapshots')|tojson }},
+        none: {{ t('reports.snapshots_none_selected')|tojson }},
         colDate: {{ t('reports.col_date')|tojson }},
+        colMember: {{ t('reports.col_member')|tojson }},
         colBalance: {{ t('reports.col_balance')|tojson }},
         colContrib: {{ t('reports.col_contributions')|tojson }},
         colDisb: {{ t('reports.col_disbursements')|tojson }},
         colPay: {{ t('reports.col_payments')|tojson }},
     };
 
+    const PALETTE = [
+        '#1a73e8', '#137333', '#a50e0e', '#e37400', '#7b1fa2',
+        '#0277bd', '#558b2f', '#d81b60', '#5d4037', '#455a64',
+    ];
+
     let balanceChart = null;
+
+    const BALANCE_LOCKED_IDS = {{ (accounts | map(attribute='id') | list | tojson) if balance_scope_fixed and accounts else 'null' }};
+    const BALANCE_API_FULL = {{ balance_full_report|default(false)|tojson }};
+
+    window.toggleAllBalanceAccounts = function(checked) {
+        document.querySelectorAll('.balance-account-cb').forEach(cb => { cb.checked = checked; });
+    };
+
+    function lastDayOfMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    function syncRangeInputs() {
+        const type = document.getElementById('snapshot_type').value;
+        document.querySelectorAll('[data-range-for]').forEach(el => {
+            const types = el.getAttribute('data-range-for').split(',');
+            el.classList.toggle('hidden', !types.includes(type));
+        });
+    }
+    document.getElementById('snapshot_type').addEventListener('change', syncRangeInputs);
+    syncRangeInputs();
+
+    (function initMonthlyDefaults() {
+        const yNow = new Date().getFullYear();
+        document.getElementById('month_year_from').value = String(yNow - 1);
+        document.getElementById('month_year_to').value = String(yNow);
+        document.getElementById('month_from').value = '01';
+        document.getElementById('month_to').value = '12';
+    })();
+
+    (function initYearlyDefaults() {
+        const yNow = new Date().getFullYear();
+        document.getElementById('year_from').value = String(yNow - 1);
+        document.getElementById('year_to').value = String(yNow);
+    })();
+
+    function rangeBounds(type) {
+        let from = null;
+        let to = null;
+        if (type === 'yearly') {
+            const yf = document.getElementById('year_from').value;
+            const yt = document.getElementById('year_to').value;
+            if (yf) from = `${yf}-01-01`;
+            if (yt) to = `${yt}-12-31`;
+        } else if (type === 'monthly') {
+            const yf = document.getElementById('month_year_from').value;
+            const yt = document.getElementById('month_year_to').value;
+            const mf = document.getElementById('month_from').value;
+            const mt = document.getElementById('month_to').value;
+            if (yf && mf) from = `${yf}-${mf}-01`;
+            if (yt && mt) {
+                const y = Number(yt);
+                const m = Number(mt);
+                to = `${yt}-${mt}-${String(lastDayOfMonth(y, m)).padStart(2, '0')}`;
+            }
+        } else {
+            from = document.getElementById('date_from').value || null;
+            to = document.getElementById('date_to').value || null;
+        }
+        return { from, to };
+    }
 
     document.getElementById('report-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const params = new URLSearchParams({
-            account_id: document.getElementById('account_id').value,
-            snapshot_type: document.getElementById('snapshot_type').value,
-        });
-        const from = document.getElementById('date_from').value;
-        const to = document.getElementById('date_to').value;
-        if (from) params.set('date_from', from);
-        if (to) params.set('date_to', to);
-
-        const res = await fetch('/api/reports/balance?' + params, {
-            credentials: 'same-origin',
-        });
         const container = document.getElementById('report-data');
         const chartContainer = document.getElementById('chart-container');
 
+        const type = document.getElementById('snapshot_type').value;
+        const ids = BALANCE_LOCKED_IDS && BALANCE_LOCKED_IDS.length
+            ? BALANCE_LOCKED_IDS
+            : Array.from(document.querySelectorAll('.balance-account-cb:checked')).map(cb => cb.value);
+        if (!ids.length) {
+            chartContainer.classList.add('hidden');
+            container.innerHTML = '<p class="gf-empty">' + RB.none + '</p>';
+            return;
+        }
+
+        const params = new URLSearchParams();
+        ids.forEach(id => params.append('account_ids', id));
+        params.set('snapshot_type', type);
+        const { from, to } = rangeBounds(type);
+        if (from) params.set('date_from', from);
+        if (to) params.set('date_to', to);
+        if (BALANCE_API_FULL) params.set('full', '1');
+
+        const res = await fetch('/api/reports/balance?' + params, { credentials: 'same-origin' });
         if (!res.ok) {
             chartContainer.classList.add('hidden');
             container.innerHTML = '<p class="gf-empty" style="color:var(--gf-red)">' + RB.err + '</p>';
             return;
         }
 
-        const data = await res.json();
-        if (!data.length) {
+        const payload = await res.json();
+        const snapshots = payload.snapshots || [];
+        const meta = payload.accounts || {};
+
+        if (!snapshots.length) {
             chartContainer.classList.add('hidden');
             container.innerHTML = '<p class="gf-empty">' + RB.empty + '</p>';
             return;
         }
 
-        // Chart
-        chartContainer.classList.remove('hidden');
-        const labels = data.map(s => s.snapshot_date);
-        const balances = data.map(s => s.balance);
-        const contributions = data.map(s => s.total_contributions);
+        const seenDates = new Set();
+        snapshots.forEach(s => seenDates.add(s.snapshot_date));
+        const labels = Array.from(seenDates).sort();
 
+        const byAccount = new Map();
+        ids.forEach(id => byAccount.set(id, new Map()));
+        snapshots.forEach(s => {
+            const m = byAccount.get(s.account_id);
+            if (m) m.set(s.snapshot_date, Number(s.balance));
+        });
+
+        const datasets = [];
+        let colorIdx = 0;
+        for (const [accountId, points] of byAccount.entries()) {
+            if (points.size === 0) continue;
+            const color = PALETTE[colorIdx % PALETTE.length];
+            colorIdx += 1;
+            const accountMeta = meta[accountId] || {};
+            const label = accountMeta.name || accountMeta.account_number || accountId.slice(0, 8);
+            datasets.push({
+                label,
+                data: labels.map(d => (points.has(d) ? points.get(d) : null)),
+                borderColor: color,
+                backgroundColor: ids.length === 1 ? 'rgba(26,115,232,0.08)' : color,
+                fill: ids.length === 1,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: color,
+                spanGaps: true,
+            });
+        }
+
+        chartContainer.classList.remove('hidden');
         if (balanceChart) balanceChart.destroy();
         balanceChart = new Chart(document.getElementById('balance-chart'), {
             type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: RB.colBalance,
-                        data: balances,
-                        borderColor: '#1a73e8',
-                        backgroundColor: 'rgba(26,115,232,0.08)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#1a73e8',
-                    },
-                    {
-                        label: RB.colContrib,
-                        data: contributions,
-                        borderColor: '#137333',
-                        backgroundColor: 'transparent',
-                        borderDash: [5, 3],
-                        tension: 0.3,
-                        pointRadius: 2,
-                        pointBackgroundColor: '#137333',
-                    },
-                ],
-            },
+            data: { labels, datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { position: 'top', labels: { font: { size: 12, family: 'Inter' }, color: '#5f6368', usePointStyle: true, pointStyle: 'circle' } },
+                    legend: {
+                        display: ids.length > 1,
+                        position: 'top',
+                        labels: { font: { size: 12, family: 'Inter' }, color: '#5f6368', usePointStyle: true, pointStyle: 'circle' },
+                    },
                     tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatCOP(ctx.raw) } },
                 },
                 scales: {
@@ -138,14 +306,18 @@
             },
         });
 
-        // Table
+        const showMember = ids.length > 1;
         let html = '<table class="gf-table"><thead><tr>';
+        if (showMember) html += '<th>' + RB.colMember + '</th>';
         html += '<th>' + RB.colDate + '</th><th>' + RB.colBalance + '</th>';
         html += '<th>' + RB.colContrib + '</th><th>' + RB.colDisb + '</th>';
         html += '<th>' + RB.colPay + '</th></tr></thead><tbody>';
 
-        data.forEach(s => {
+        snapshots.forEach(s => {
+            const accountMeta = meta[s.account_id] || {};
+            const memberLabel = accountMeta.name || accountMeta.account_number || s.account_id.slice(0, 8);
             html += '<tr>';
+            if (showMember) html += '<td class="font-medium">' + memberLabel + '</td>';
             html += '<td class="text-gf-text-2">' + s.snapshot_date + '</td>';
             html += '<td class="font-medium">' + formatCOP(s.balance) + '</td>';
             html += '<td class="gf-positive">' + formatCOP(s.total_contributions) + '</td>';

@@ -29,8 +29,8 @@ async def main():
     today = date.today()
 
     print(f"Generating daily snapshots for {today}...")
-    count = await generate_daily_snapshot(db, today)
-    print(f"Generated {count} daily snapshots.")
+    result = await generate_daily_snapshot(db, today)
+    print(f"Generated {result['generated']} daily snapshots.")
 
     print("Updating fund summary...")
     fund = await update_fund_summary(db)

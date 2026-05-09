@@ -34,17 +34,79 @@
     </div>
     <div class="gf-card p-5">
         <p class="text-sm text-gf-text-2 mb-3">{{ t('reports.last_updated') }} {{ fund.last_updated[:19] if fund.last_updated is string else fund.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
+
         {% if is_admin %}
-        <button type="button"
-                hx-post="/api/admin/snapshots/generate"
-                hx-swap="none"
-                hx-disabled-elt="this"
-                class="gf-btn gf-btn-primary gf-admin-only"
-                data-gen-label="{{ t('reports.generating')|e }}"
-                hx-on::before-request="this.dataset.origLabel=this.textContent; this.textContent=this.dataset.genLabel;"
-                hx-on::after-request="this.textContent=this.dataset.origLabel;">
-            {{ t('reports.generate_snapshots') }}
-        </button>
+        <div class="gf-admin-only space-y-3">
+            <h3 class="text-xs font-medium text-gf-text-3 uppercase tracking-wide">
+                {{ t('reports.snapshots_panel_title') }}
+            </h3>
+
+            <div class="flex flex-wrap gap-4">
+                <div>
+                    <label for="snapshot-type" class="gf-label">{{ t('reports.snapshot_type') }}</label>
+                    <select id="snapshot-type" class="gf-select" style="width: auto;">
+                        <option value="daily" selected>{{ t('reports.daily') }}</option>
+                        <option value="monthly">{{ t('reports.monthly') }}</option>
+                        <option value="yearly">{{ t('reports.yearly') }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="snapshot-date" class="gf-label">{{ t('reports.snapshot_date') }}</label>
+                    <input type="date" id="snapshot-date" class="gf-input" value="{{ today_iso }}" style="width: auto;">
+                    <p id="snapshot-date-hint" class="text-xs text-gf-text-3 mt-1 hidden">
+                        {{ t('reports.snapshot_date_hint') }}
+                    </p>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="gf-label mb-0">{{ t('reports.select_accounts') }}</label>
+                    <div class="flex gap-3 text-xs">
+                        <button type="button" class="gf-link" onclick="toggleAllSnapshotAccounts(true)">
+                            {{ t('reports.select_all') }}
+                        </button>
+                        <button type="button" class="gf-link" onclick="toggleAllSnapshotAccounts(false)">
+                            {{ t('reports.clear') }}
+                        </button>
+                    </div>
+                </div>
+                <div class="border border-gf-border rounded max-h-56 overflow-y-auto p-2 bg-gf-surface">
+                    {% if accounts %}
+                    {% for a in accounts %}
+                    <label class="flex items-center gap-2 py-1 text-sm cursor-pointer hover:bg-white px-1 rounded">
+                        <input type="checkbox" class="snapshot-account-cb rounded border-gf-border-s" value="{{ a.id }}">
+                        <span class="flex-1 truncate">{{ a.owner_name or a.account_number }}</span>
+                        <span class="font-mono text-xs text-gf-text-3">{{ a.account_number }}</span>
+                    </label>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-sm text-gf-text-3 px-1">{{ t('reports.no_accounts') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-1">
+                <button type="button"
+                        id="generate-selected-btn"
+                        class="gf-btn gf-btn-primary"
+                        data-default-label="{{ t('reports.generate_selected')|e }}"
+                        data-generating-label="{{ t('reports.generating')|e }}"
+                        onclick="generateSnapshots('selected')">
+                    {{ t('reports.generate_selected') }}
+                </button>
+                <button type="button"
+                        id="generate-all-btn"
+                        class="gf-btn gf-btn-outline"
+                        data-default-label="{{ t('reports.generate_all')|e }}"
+                        data-generating-label="{{ t('reports.generating')|e }}"
+                        onclick="generateSnapshots('all')">
+                    {{ t('reports.generate_all') }}
+                </button>
+            </div>
+
+            <p id="snapshot-status" class="text-sm" role="status" aria-live="polite"></p>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -80,6 +142,87 @@
     });
 })();
 </script>
+
+{% if is_admin %}
+<script>
+(function() {
+    const SUCCESS_TPL = {{ t('reports.snapshots_success')|tojson }};
+    const NONE_SELECTED = {{ t('reports.snapshots_none_selected')|tojson }};
+    const ERROR_TPL = {{ t('reports.snapshots_error')|tojson }};
+    const SKIPPED_TPL = {{ t('reports.snapshots_skipped')|tojson }};
+
+    window.toggleAllSnapshotAccounts = function(checked) {
+        document.querySelectorAll('.snapshot-account-cb').forEach(cb => { cb.checked = checked; });
+    };
+
+    function setBusy(busy) {
+        ['generate-selected-btn', 'generate-all-btn'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.disabled = busy;
+            btn.textContent = busy ? btn.dataset.generatingLabel : btn.dataset.defaultLabel;
+        });
+    }
+
+    const typeSelect = document.getElementById('snapshot-type');
+    const dateHint = document.getElementById('snapshot-date-hint');
+    if (typeSelect && dateHint) {
+        const updateHint = () => dateHint.classList.toggle('hidden', typeSelect.value === 'daily');
+        typeSelect.addEventListener('change', updateHint);
+        updateHint();
+    }
+
+    window.generateSnapshots = async function(mode) {
+        const status = document.getElementById('snapshot-status');
+        const dateInput = document.getElementById('snapshot-date');
+        const body = {};
+        if (dateInput && dateInput.value) body.snapshot_date = dateInput.value;
+        if (typeSelect && typeSelect.value) body.snapshot_type = typeSelect.value;
+
+        if (mode === 'selected') {
+            const ids = Array.from(document.querySelectorAll('.snapshot-account-cb:checked'))
+                .map(cb => cb.value);
+            if (ids.length === 0) {
+                status.textContent = NONE_SELECTED;
+                status.style.color = 'var(--gf-amber)';
+                return;
+            }
+            body.account_ids = ids;
+        }
+
+        status.textContent = '';
+        setBusy(true);
+        try {
+            const res = await fetch('/api/admin/snapshots/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || res.statusText);
+            }
+            const data = await res.json();
+            let msg = SUCCESS_TPL
+                .replace('{count}', data.generated)
+                .replace('{type}', data.snapshot_type || 'daily')
+                .replace('{date}', data.date);
+            if (data.skipped && data.skipped.length) {
+                msg += ' ' + SKIPPED_TPL.replace('{count}', data.skipped.length);
+            }
+            status.textContent = msg;
+            status.style.color = 'var(--gf-green)';
+        } catch (e) {
+            status.textContent = ERROR_TPL.replace('{error}', e.message || '');
+            status.style.color = 'var(--gf-red)';
+        } finally {
+            setBusy(false);
+        }
+    };
+})();
+</script>
+{% endif %}
+
 {% else %}
 <div class="gf-card gf-empty">
     {{ t('reports.fund_uninitialized') }}

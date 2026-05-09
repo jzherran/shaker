@@ -169,6 +169,12 @@
 
         (function () {
             var KEY = 'shaker.viewAsUser';
+            var VIEW_AS_USER_COOKIE = 'shaker_view_as_user=';
+            function setViewAsUserCookie(on) {
+                var maxAge = on ? String(60 * 60 * 24 * 365) : '0';
+                var val = on ? '1' : '';
+                document.cookie = VIEW_AS_USER_COOKIE + val + '; path=/; SameSite=Lax; max-age=' + maxAge;
+            }
             function syncSelects(active) {
                 if (!active) return;
                 document.querySelectorAll('select').forEach(function (sel) {
@@ -187,6 +193,7 @@
                 document.body.classList.toggle('gf-view-as-user', active);
                 var btn = document.getElementById('view-mode-toggle');
                 if (btn) {
+                    setViewAsUserCookie(active);
                     var label = btn.querySelector('.gf-toggle-text');
                     var labelSm = btn.querySelector('.gf-toggle-text-sm');
                     var full = active ? btn.dataset.labelUser : btn.dataset.labelAdmin;

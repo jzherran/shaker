@@ -62,7 +62,7 @@ async def balance_report_page(
 
 
 @router.get("/reports/fund")
-async def fund_report_page(request: Request, user: User = Depends(get_current_user)):
+async def fund_report_page(request: Request, user: User = Depends(require_admin)):
     db = get_db()
     fund = await report_service.get_fund_summary(db)
     accounts = []
@@ -128,7 +128,7 @@ async def get_balance_data(
 
 
 @router.get("/api/reports/fund-summary")
-async def get_fund_summary(user: User = Depends(get_current_user)):
+async def get_fund_summary(user: User = Depends(require_admin)):
     db = get_db()
     fund = await report_service.get_fund_summary(db)
     if not fund:

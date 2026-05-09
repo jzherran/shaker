@@ -7,17 +7,9 @@
     <p class="text-sm text-gf-text-2 mt-1">{{ t('dashboard.subtitle') }}</p>
 </div>
 
-{# ── Metric cards ── #}
-{% set _metric_cards = namespace(c=0) %}
-{% if account %}{% set _metric_cards.c = _metric_cards.c + 1 %}{% endif %}
-{% if is_admin and fund %}
-{% set _metric_cards.c = _metric_cards.c + 2 %}
-{% elif not is_admin and loan_repayment_summary is not none %}
-{% set _metric_cards.c = _metric_cards.c + 1 %}
-{% endif %}
-{# Single balance (member without loan, or admin with account only): full width. Single loan-only card: capped width. #}
-{% set _metric_balance_only_full = _metric_cards.c == 1 and account and (is_admin or loan_repayment_summary is none) %}
-<div class="gf-dashboard-metrics grid gap-4 mb-8 w-full {% if _metric_cards.c == 1 and not _metric_balance_only_full %}grid-cols-1 max-w-md{% elif _metric_cards.c == 1 %}grid-cols-1{% else %}grid-cols-1 sm:grid-cols-2 lg:grid-cols-3{% endif %}">
+{# ── Metric cards (grid columns match visible cards; order: balance → fund → loans) ── #}
+{% if dashboard_metric_count > 0 %}
+<div class="gf-dashboard-metrics grid gap-4 mb-8 w-full {% if dashboard_metric_count == 1 %}grid-cols-1{% elif dashboard_metric_count == 2 %}grid-cols-1 sm:grid-cols-2{% else %}grid-cols-1 sm:grid-cols-2 lg:grid-cols-3{% endif %}">
     {% if account %}
     <div class="gf-card gf-metric">
         <div class="gf-metric-label">{{ t('dashboard.your_balance') }}</div>
@@ -26,19 +18,21 @@
     </div>
     {% endif %}
 
-    {% if is_admin and fund %}
-    <div class="gf-card gf-metric gf-admin-only">
+    {% if dashboard_show_fund_metrics %}
+    <div class="gf-card gf-metric">
         <div class="gf-metric-label">{{ t('dashboard.collective_fund') }}</div>
         <div class="gf-metric-value">{{ fund.total_balance|cop }}</div>
         <div class="gf-metric-sub">{{ fund.total_members }} {{ t('dashboard.members') }}</div>
     </div>
-    <div class="gf-card gf-metric gf-admin-only">
+    <div class="gf-card gf-metric">
         <div class="gf-metric-label">{{ t('dashboard.available_lending') }}</div>
         <div class="gf-metric-value gf-positive">{{ fund.available_for_lending|cop }}</div>
         <div class="gf-metric-sub">{{ t('dashboard.active_loans_prefix') }} {{ fund.total_active_loans|cop }}</div>
     </div>
-    {% elif not is_admin and loan_repayment_summary is not none %}
-    <div class="gf-card gf-metric {% if account %}sm:col-span-2 lg:col-span-2{% else %}sm:col-span-2 lg:col-span-3{% endif %}">
+    {% endif %}
+
+    {% if loan_repayment_summary is not none %}
+    <div class="gf-card gf-metric">
         <div class="gf-metric-label">{{ t('dashboard.loan_pending_title') }}</div>
         <div class="gf-metric-value" style="color: var(--gf-amber);">{{ loan_repayment_summary.total_outstanding_principal|cop }}</div>
         <div class="gf-metric-sub">
@@ -51,12 +45,13 @@
             {{ t('dashboard.loan_pending_none') }}
             {% endif %}
         </div>
-        <div class="mt-3">
+        <div class="gf-metric-sub mt-2">
             <a href="/loans" class="gf-link text-sm">{{ t('dashboard.view_loans') }}</a>
         </div>
     </div>
     {% endif %}
 </div>
+{% endif %}
 
 {# ── Quick actions ── #}
 <div class="flex flex-wrap gap-3 mb-8">
@@ -86,8 +81,8 @@
     </div>
     {% endif %}
 
-    {% if is_admin and fund_history %}
-    <div class="gf-card p-4 w-full gf-admin-only">
+    {% if fund_history %}
+    <div class="gf-card p-4 w-full">
         <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
             <h3 class="text-sm font-medium text-gf-text">{{ t('dashboard.fund_growth_title') }}</h3>
             <div class="flex items-center gap-3">
@@ -187,7 +182,7 @@
 </script>
 {% endif %}
 
-{% if balance_history or (is_admin and fund_history) %}
+{% if balance_history or fund_history %}
 <script>
 (function() {
     const PALETTE = [
@@ -245,7 +240,7 @@
     buildSingleLineChart('user-balance-chart', {{ balance_history|tojson }}, '#1a73e8', 'rgba(26, 115, 232, 0.12)');
     {% endif %}
 
-    {% if is_admin and fund_history %}
+    {% if fund_history %}
     const fundTotal = {{ fund_history|tojson }};
     const fundPerAccount = {{ fund_per_account|tojson }};
 

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
 
 from ..auth import require_admin, require_approved_user
 from ..dependencies import get_db, templates
@@ -14,24 +15,20 @@ async def accounts_list(
     user: User = Depends(require_approved_user),
     status: str = None,
 ):
+    if user.role != "admin":
+        return RedirectResponse(url="/dashboard", status_code=302)
+
     db = get_db()
-    if user.role == "admin":
-        accounts = await account_service.get_all_accounts(db, status=status)
-        pending_users = []
-        merged_users = []
-        merge_requests = []
-        if status == "pending" or status is None:
-            pending_users = await user_service.get_pending_users(db)
-        if status == "merge_requests" or status is None:
-            merge_requests = await user_service.get_pending_merge_requests(db)
-        if status == "merged" or status is None:
-            merged_users = await user_service.get_merged_users(db)
-    else:
-        account = await account_service.get_account_by_user(db, user.id)
-        accounts = [account] if account else []
-        pending_users = []
-        merged_users = []
-        merge_requests = []
+    accounts = await account_service.get_all_accounts(db, status=status)
+    pending_users = []
+    merged_users = []
+    merge_requests = []
+    if status == "pending" or status is None:
+        pending_users = await user_service.get_pending_users(db)
+    if status == "merge_requests" or status is None:
+        merge_requests = await user_service.get_pending_merge_requests(db)
+    if status == "merged" or status is None:
+        merged_users = await user_service.get_merged_users(db)
 
     return templates.TemplateResponse(
         request,

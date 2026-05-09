@@ -7,7 +7,7 @@ from ..auth import (
     get_current_user_or_none,
 )
 from ..config import get_settings
-from ..dependencies import get_db, templates
+from ..dependencies import admin_view_as_user, get_db, templates
 from ..i18n import locale_from_request, translate, translate_html
 from ..models.user import User
 from ..services import account_service, loan_service, report_service, user_service
@@ -269,6 +269,7 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
     merge_pending = await user_service.get_user_merge_status(db, user.id) == "pending"
     account = await account_service.get_account_by_user(db, user.id)
 
+    admin_member_ui = user.role == "admin" and admin_view_as_user(request)
     fund = await report_service.get_fund_summary(db)
 
     # Get recent contributions for this account
@@ -286,15 +287,24 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
 
     fund_history: list[dict] = []
     fund_per_account: dict = {"labels": [], "series": []}
-    if user.role == "admin":
+    if user.role == "admin" and not admin_member_ui:
         fund_history = await report_service.get_fund_historical_balances(db, months=12)
         fund_per_account = await report_service.get_fund_per_account_history(db, months=12)
 
     loan_repayment_summary: dict | None = None
-    if user.role != "admin" and account:
+    if account and (user.role != "admin" or admin_member_ui):
         loan_repayment_summary = await loan_service.summarize_active_loan_repayments(
             db, account.id
         )
+
+    dashboard_show_fund_metrics = bool(
+        user.role == "admin" and fund and not admin_member_ui
+    )
+    dashboard_metric_count = (
+        (1 if account else 0)
+        + (2 if dashboard_show_fund_metrics else 0)
+        + (1 if loan_repayment_summary is not None else 0)
+    )
 
     return templates.TemplateResponse(
         request,
@@ -310,5 +320,7 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
             "fund_history": fund_history,
             "fund_per_account": fund_per_account,
             "loan_repayment_summary": loan_repayment_summary,
+            "dashboard_show_fund_metrics": dashboard_show_fund_metrics,
+            "dashboard_metric_count": dashboard_metric_count,
         },
     )

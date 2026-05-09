@@ -462,8 +462,3 @@ body {
 }
 
 body.gf-view-as-user .gf-admin-only { display: none !important; }
-
-/* Admin fund metric nodes stay in DOM under view-as-user; grid-cols-3 leaves one visible card in column 1 (~⅓ width). */
-body.gf-view-as-user .gf-dashboard-metrics {
-    grid-template-columns: minmax(0, 1fr) !important;
-}

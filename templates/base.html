@@ -47,7 +47,8 @@
     <script src="/static/js/cop-format.js"></script>
     <link rel="stylesheet" href="/static/css/custom.css">
 </head>
-<body class="min-h-screen font-sans antialiased bg-white text-gf-text">
+<body class="min-h-screen font-sans antialiased bg-white text-gf-text{% if user and user.role != 'admin' %} gf-view-as-user{% endif %}"
+      data-gf-force-user-view="{% if user and user.role != 'admin' %}1{% endif %}">
     {% if user %}
     {# ── Sidebar ── #}
     <div class="gf-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -170,6 +171,7 @@
         (function () {
             var KEY = 'shaker.viewAsUser';
             var VIEW_AS_USER_COOKIE = 'shaker_view_as_user=';
+            var forceUserView = document.body.getAttribute('data-gf-force-user-view') === '1';
             function setViewAsUserCookie(on) {
                 var maxAge = on ? String(60 * 60 * 24 * 365) : '0';
                 var val = on ? '1' : '';
@@ -190,7 +192,8 @@
                 });
             }
             function apply(active) {
-                document.body.classList.toggle('gf-view-as-user', active);
+                var effective = forceUserView || active;
+                document.body.classList.toggle('gf-view-as-user', effective);
                 var btn = document.getElementById('view-mode-toggle');
                 if (btn) {
                     setViewAsUserCookie(active);

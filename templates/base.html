@@ -218,6 +218,7 @@
                 btn.addEventListener('click', function () {
                     var next = !(localStorage.getItem(KEY) === '1');
                     localStorage.setItem(KEY, next ? '1' : '0');
+                    setViewAsUserCookie(next);
                     window.location.assign('/dashboard');
                 });
             });
